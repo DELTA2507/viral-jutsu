@@ -1,0 +1,15 @@
+{
+  "subreddits": [
+    "assets/subreddits/be_amazed.png",
+    "assets/subreddits/cursed_comments.png",
+    "assets/subreddits/reddit_snoo.png"
+  ],
+  "memes": [
+    "assets/memes/ia.png",
+    "assets/memes/skong.png"
+  ],
+  "hazards": [
+    "assets/hazards/mod.png",
+    "assets/hazards/nsfw.png"
+  ]
+}
