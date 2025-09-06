@@ -6,13 +6,31 @@ export class Preloader extends Scene {
   }
 
   init() {
-    this.add.image(512, 384, 'background');
+    const { width, height } = this.scale;
+    const bg = this.add.image(width / 2, height / 2, 'background');
+    const scale = Math.max(width / bg.width, height / bg.height);
+    bg.setScale(scale).setOrigin(0.5);
 
-    const barOutline = this.add.rectangle(512, 384, 468, 32).setStrokeStyle(2, 0xffffff);
-    const bar = this.add.rectangle(512 - 230, 384, 4, 28, 0xffffff);
+     // outline centrado
+    const outlineWidth = width * 0.6;
+    const outlineHeight = 32;
+    const barOutline = this.add
+      .rectangle(width / 2, height * 0.9, outlineWidth, outlineHeight)
+      .setStrokeStyle(2, 0xffffff);
+
+    // barra inicia vacía y alineada al borde izquierdo del outline
+    const bar = this.add
+      .rectangle(
+        barOutline.getTopLeft().x + 2, // +2 por el stroke
+        barOutline.y,
+        0,
+        outlineHeight - 4,
+        0xffffff
+      )
+      .setOrigin(0, 0.5);
 
     this.load.on('progress', (progress: number) => {
-      bar.width = 4 + 460 * progress;
+      bar.width = 4 + (width * 0.6 - 8) * progress;
     });
   }
 

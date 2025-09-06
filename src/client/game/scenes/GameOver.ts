@@ -16,7 +16,10 @@ export class GameOver extends Scene {
     this.camera.setBackgroundColor(0xff0000);
 
     // Background – create once, full-screen
-    this.background = this.add.image(0, 0, 'background').setOrigin(0).setAlpha(0.5);
+    // Background – center origin
+    this.background = this.add.image(0, 0, 'background')
+      .setOrigin(0.5)
+      .setAlpha(0.5);
 
     // "Game Over" text – created once and scaled responsively
     this.gameover_text = this.add
@@ -51,7 +54,10 @@ export class GameOver extends Scene {
 
     // Stretch background to fill entire screen
     if (this.background) {
-      this.background.setDisplaySize(width, height);
+      const scale = Math.max(width / this.background.width, height / this.background.height);
+      this.background
+        .setPosition(width / 2, height / 2)
+        .setScale(scale);
     }
 
     // Compute scale factor (never enlarge above 1×)

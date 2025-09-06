@@ -86,8 +86,5 @@ export class MainMenu extends Scene {
     }
 
     this.title.setPosition(width / 2, height * 0.6);
-
-    // Important: don't scale the text! Scale its font instead
-    // this.title.setScale(scaleFactor);  <-- remove this
   }
 }
