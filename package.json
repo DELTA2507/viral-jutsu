@@ -21,7 +21,8 @@
     "launch": "npm run build && npm run deploy && devvit publish",
     "prettier": "prettier-package-json --write ./package.json && prettier --write .",
     "type-check": "tsc --build",
-    "gen-icons-json": "ts-node --esm tools/generateIconsJson.ts"
+    "gen-icons-json": "ts-node --esm tools/generateIconsJson.ts",
+    "gen-sounds-json": "ts-node --esm tools/generateSoundsJson.ts"
   },
   "dependencies": {
     "@devvit/web": "0.12.0",

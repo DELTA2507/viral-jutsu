@@ -1,0 +1,29 @@
+{
+  "cuts": {
+    "default": [
+      "assets/sounds/cuts/default/cut.wav"
+    ],
+    "hazard": [
+      "assets/sounds/cuts/hazard/cut_hazard.wav"
+    ],
+    "powerUp": [
+      "assets/sounds/cuts/powerUp/cut_powerup.wav"
+    ]
+  },
+  "powerUps": {
+    "multicut": [
+      "assets/sounds/powerUps/multicut/powerup_multicut.wav"
+    ]
+  },
+  "ui": {
+    "button": [
+      "assets/sounds/ui/button/click.wav"
+    ]
+  },
+  "effects": {
+    "jump": [
+      "assets/sounds/effects/jump/jump.wav",
+      "assets/sounds/effects/jump/jump_alt.wav"
+    ]
+  }
+}

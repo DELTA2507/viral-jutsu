@@ -26,38 +26,6 @@ export class MainMenu extends Scene {
     // Re-calculate positions whenever the game canvas is resized (e.g. orientation change).
     this.scale.on('resize', () => this.refreshLayout());
 
-    this.input.once('pointerdown', () => {
-      this.scene.start('Game');
-    });
-  }
-
-  /**
-   * Positions and (lightly) scales all UI elements based on the current game size.
-   * Call this from create() and from any resize events.
-   */
-  private refreshLayout(): void {
-    const { width, height } = this.scale;
-
-    // Resize camera to new viewport to prevent black bars
-    this.cameras.resize(width, height);
-
-    // Background – stretch to fill the whole canvas
-    if (!this.background) {
-      this.background = this.add.image(width / 2, height / 2, 'background').setOrigin(0.5);
-    }
-    const scale = Math.max(width / this.background.width, height / this.background.height);
-    this.background.setScale(scale).setPosition(width / 2, height / 2);
-
-
-    // Logo – keep aspect but scale down for very small screens
-    const scaleFactor = Math.min(width / 1024, height / 768);
-
-    if (!this.logo) {
-      this.logo = this.add.image(0, 0, 'logo');
-    }
-    this.logo!.setPosition(width / 2, height * 0.38).setScale(scaleFactor);
-
-    // Title text – create once, then scale on resize
     const baseFontSize = 38;
     if (!this.title) {
       this.title = this.add
@@ -69,9 +37,57 @@ export class MainMenu extends Scene {
           strokeThickness: 8,
           align: 'center',
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true }) // <— make it clickable
+        .on('pointerover', () => this.title!.setStyle({ color: '#ffd700' }))
+        .on('pointerout', () => this.title!.setStyle({ color: '#ffffff' }))
+        .once('pointerdown', () => this.scene.start('Game')); // only clicks on this text
     }
-    this.title!.setPosition(width / 2, height * 0.6);
-    this.title!.setScale(scaleFactor);
+  }
+
+  /**
+   * Positions and (lightly) scales all UI elements based on the current game size.
+   * Call this from create() and from any resize events.
+   */
+  private refreshLayout(): void {
+    const { width, height } = this.scale;
+    this.cameras.resize(width, height);
+
+    // Background
+    if (!this.background) {
+      this.background = this.add.image(width / 2, height / 2, 'background').setOrigin(0.5);
+    }
+    const bgScale = Math.max(width / this.background.width, height / this.background.height);
+    this.background.setScale(bgScale).setPosition(width / 2, height / 2);
+
+    // Logo
+    const scaleFactor = Math.min(width / 1024, height / 768);
+    if (!this.logo) {
+      this.logo = this.add.image(0, 0, 'logo');
+    }
+    this.logo.setPosition(width / 2, height * 0.38).setScale(scaleFactor);
+
+    // Title text – create once
+    if (!this.title) {
+      const baseFontSize = 38;
+      this.title = this.add.text(0, 0, 'Iniciar Juego', {
+        fontFamily: 'Arial Black',
+        fontSize: `${baseFontSize}px`,
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 8,
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => this.title!.setStyle({ color: '#ffd700' }))
+      .on('pointerout', () => this.title!.setStyle({ color: '#ffffff' }))
+      .once('pointerdown', () => this.scene.start('Game'));
+    }
+
+    this.title.setPosition(width / 2, height * 0.6);
+
+    // Important: don't scale the text! Scale its font instead
+    // this.title.setScale(scaleFactor);  <-- remove this
   }
 }

@@ -8,7 +8,7 @@ type IconCategories = 'subreddits' | 'memes' | 'hazards';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const assetsDir = path.resolve(__dirname, '../src/client/public/assets');
+const assetsDir = path.resolve(__dirname, '../src/client/public/assets/images/');
 const outputFile = path.join(assetsDir, 'icons.json');
 
 const categories: Record<IconCategories, string> = {

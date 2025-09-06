@@ -17,9 +17,10 @@ export class Preloader extends Scene {
   }
 
   preload() {
-    this.load.image('reddit_snoo', 'assets/reddit_snoo.png');
-    this.load.image('logo', 'assets/logo.png');
-    this.load.json('icons', 'assets/icons.json');
+    this.load.image('reddit_snoo', 'assets/images/subreddits/reddit_snoo.png');
+    this.load.image('logo', 'assets/images/logo.png');
+    this.load.json('icons', 'assets/images/icons.json');
+    this.load.json('sounds', 'assets/sounds/sounds.json'); // <-- added
 
     this.load.on('filecomplete-json-icons', () => {
       const json: Record<string, string[]> = this.cache.json.get('icons');
@@ -28,11 +29,17 @@ export class Preloader extends Scene {
         loadIcons(this, category, urls);
       }
 
-      this.load.once('complete', () => {
-        this.scene.start('MainMenu');
-      });
+      this.load.start();
+    });
 
-      this.load.start(); // inicia la carga de las imágenes recién encoladas
+    this.load.on('filecomplete-json-sounds', () => {
+      const json: Record<string, string[]> = this.cache.json.get('sounds');
+
+      for (const [category, urls] of Object.entries(json)) {
+        loadSounds(this, category, urls);
+      }
+
+      this.load.start();
     });
   }
 
@@ -52,4 +59,17 @@ function loadIcons(thisScene: Phaser.Scene, category: string, urls: string[]) {
   }
 
   thisScene.registry.set(`${category}Icons`, keys);
+}
+
+function loadSounds(thisScene: Phaser.Scene, category: string, urls: Record<string, string[]> | string[]) {
+  for (const [subCat, files] of Object.entries(urls)) {
+    const keys: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const url = files[i];
+      const key = `${category}_${subCat}_${i}`;
+      thisScene.load.audio(key, url);
+      keys.push(key);
+    }
+    thisScene.registry.set(`${category}_${subCat}Sounds`, keys);
+  }
 }
