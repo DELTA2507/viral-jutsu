@@ -43,9 +43,11 @@ export class MainMenu extends Scene {
 
     // Background – stretch to fill the whole canvas
     if (!this.background) {
-      this.background = this.add.image(0, 0, 'background').setOrigin(0);
+      this.background = this.add.image(width / 2, height / 2, 'background').setOrigin(0.5);
     }
-    this.background!.setDisplaySize(width, height);
+    const scale = Math.max(width / this.background.width, height / this.background.height);
+    this.background.setScale(scale).setPosition(width / 2, height / 2);
+
 
     // Logo – keep aspect but scale down for very small screens
     const scaleFactor = Math.min(width / 1024, height / 768);
