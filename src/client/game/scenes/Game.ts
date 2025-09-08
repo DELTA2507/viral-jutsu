@@ -232,12 +232,10 @@ private cutEntity(e: GameEntity) {
     this.addEntityToGrid(entity);
 
     // pick a jump sound if it exists
-    const jumpSounds = effects['jump'] || [];
+    const jumpSounds = this.registry.get('effects_jumpSounds') || [];
     if (jumpSounds.length) {
       const soundKey = jumpSounds[Phaser.Math.Between(0, jumpSounds.length - 1)];
-      if (typeof soundKey === 'string') {
-        this.sound.play(soundKey);
-      }
+      this.sound.play(soundKey);
     }
   }
 
