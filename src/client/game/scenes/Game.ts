@@ -6,7 +6,7 @@ interface GameEntity {
   vy: number;
   rotationSpeed: number;
   radius: number;
-  type: 'good' | 'bad' | 'powerUp';
+  type: 'good' | 'hazard' | 'powerUp';
 }
 
 export class Game extends Scene {
@@ -50,16 +50,16 @@ export class Game extends Scene {
   }
 
   private setupUI() {
-    const textStyle = { fontFamily: 'Arial Black', fontSize: 25, color: '#ffd700', stroke: '#000', strokeThickness: 5 };
+    const textStyle = { fontFamily: 'Helvetica', fontSize: 25, color: '#ffd700', stroke: '#000', strokeThickness: 5 };
     this.pointsCountText = this.add.text(20, 20, `Points: ${this.pointsCount}`, textStyle);
     this.failsCountText = this.add.text(20, 60, `Fails: ${this.failsCount}`, textStyle);
 
     this.goButton = this.add.text(this.scale.width / 2, this.scale.height * 0.75, 'Game Over', {
-      fontFamily: 'Arial Black', fontSize: 36, color: '#fff', backgroundColor: '#444', padding: { x: 25, y: 12 }
+      fontFamily: 'Helvetica', fontSize: 36, color: '#fff', backgroundColor: '#444', padding: { x: 25, y: 12 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
       .on('pointerover', () => this.goButton.setStyle({ backgroundColor: '#555' }))
       .on('pointerout', () => this.goButton.setStyle({ backgroundColor: '#444' }))
-      .on('pointerdown', () => this.restartGame());
+      .on('pointerdown', () => this.GameOver());
   }
 
   private setupInput() {
@@ -72,7 +72,31 @@ export class Game extends Scene {
     });
   }
 
-  private restartGame() { this.pointsCount = 0; this.failsCount = 0; this.updatePointsCountText(); this.updateFailsCountText(); this.scene.start('GameOver'); }
+  private async GameOver() {
+    try {
+      console.log('Submitting score:', this.pointsCount);
+      const response = await fetch(`${window.location.origin}/api/leaderboard/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score: Number(this.pointsCount) }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Leaderboard submit failed', response.status, text);
+      } else {
+        console.log('Score submitted successfully');
+      }
+    } catch (err) {
+      console.error('Failed to submit score', err);
+    }
+
+    this.pointsCount = 0;
+    this.failsCount = 0;
+    this.updatePointsCountText();
+    this.updateFailsCountText();
+    this.scene.start('GameOver');
+  }
 
   // --- TRAIL & CUT ---
   private updateTrail(x: number, y: number) {
@@ -166,12 +190,12 @@ private cutEntity(e: GameEntity) {
   } else { 
     this.failsCount++; 
     this.updateFailsCountText(); 
-    if (this.failsCount >= 3) this.restartGame(); 
+    if (this.failsCount >= 3) this.GameOver(); 
   }
 
   // --- PLAY CUT SOUND ---
   let cutCategory = 'default';
-  if (e.type === 'bad') cutCategory = 'hazard';
+  if (e.type === 'hazard') cutCategory = 'hazard';
   if (e.type === 'powerUp') cutCategory = 'powerUp';
 
   const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
@@ -203,7 +227,7 @@ private cutEntity(e: GameEntity) {
   spawnEntity(width: number, height: number) {
     const radius = Phaser.Math.Between(40, 60);
     const x = Phaser.Math.Between(radius, width - radius); const y = height + radius;
-    const type: 'good' | 'bad' = Math.random() < 0.8 ? 'good' : 'bad';
+    const type: 'good' | 'hazard' = Math.random() < 0.8 ? 'good' : 'hazard';
 
     // --- load icons from registry ---
     const subredditIcons: string[] = this.registry.get('subredditsIcons') || [];
@@ -240,7 +264,7 @@ private cutEntity(e: GameEntity) {
   }
 
   private addEntityBorder(entity: GameEntity) {
-    const color = entity.type === 'bad' ? 0xff0000 : entity.type === 'powerUp' ? 0x00ff00 : 0xffff00;
+    const color = entity.type === 'hazard' ? 0xff0000 : entity.type === 'powerUp' ? 0x00ff00 : 0xffff00;
     const border = this.add.graphics();
     border.lineStyle(5, color, 1);
     border.strokeCircle(entity.sprite.x, entity.sprite.y, entity.radius);

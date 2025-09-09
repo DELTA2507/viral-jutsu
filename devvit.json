@@ -1,5 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "permissions": { "redis": true },
   "name": "viral-jutsu",
   "post": {
     "dir": "dist/client",
@@ -17,7 +18,7 @@
     "items": [
       {
         "label": "Create a new post",
-        "description": "viral-jutsu",
+        "description": "Create a new instance of ViralJutsu",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-create"
