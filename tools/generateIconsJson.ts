@@ -3,7 +3,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 
-type IconCategories = 'subreddits' | 'memes' | 'hazards';
+type IconCategories = 'subreddits' | 'memes' | 'hazards' | 'powerUps';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,12 +15,14 @@ const categories: Record<IconCategories, string> = {
   subreddits: 'subreddits',
   memes: 'memes',
   hazards: 'hazards',
+  powerUps: 'powerUps'
 };
 
 const jsonOutput: Record<string, string[]> = {
   subreddits: [],
   memes: [],
   hazards: [],
+  powerUps: []
 };
 
 async function processCategory(catKey: IconCategories, folderName: string) {
@@ -50,7 +52,7 @@ async function processCategory(catKey: IconCategories, folderName: string) {
 
     // Solo agregar PNG al JSON
     if (path.extname(fileName).toLowerCase() === '.png') {
-      jsonOutput[catKey].push(`assets/${folderName}/${fileName}`);
+      jsonOutput[catKey].push(`assets/images/${folderName}/${fileName}`);
     }
   }
 }

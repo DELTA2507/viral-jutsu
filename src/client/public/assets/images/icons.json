@@ -1,15 +1,20 @@
 {
   "subreddits": [
-    "assets/subreddits/be_amazed.png",
-    "assets/subreddits/cursed_comments.png",
-    "assets/subreddits/reddit_snoo.png"
+    "assets/images/subreddits/be_amazed.png",
+    "assets/images/subreddits/cursed_comments.png",
+    "assets/images/subreddits/reddit_snoo.png"
   ],
   "memes": [
-    "assets/memes/ia.png",
-    "assets/memes/skong.png"
+    "assets/images/memes/ia.png",
+    "assets/images/memes/skong.png"
   ],
   "hazards": [
-    "assets/hazards/mod.png",
-    "assets/hazards/nsfw.png"
+    "assets/images/hazards/mod.png",
+    "assets/images/hazards/nsfw.png"
+  ],
+  "powerUps": [
+    "assets/images/powerUps/kunaistorm.png",
+    "assets/images/powerUps/shield.png",
+    "assets/images/powerUps/slowmo.png"
   ]
 }
