@@ -11,8 +11,11 @@
     ]
   },
   "powerUps": {
-    "multicut": [
-      "assets/sounds/powerUps/multicut/powerup_multicut.wav"
+    "Slowmo": [
+      "assets/sounds/powerUps/Slowmo/powerup_slowmo.mp3"
+    ],
+    "kunaiStorm": [
+      "assets/sounds/powerUps/kunaiStorm/powerup_kunaiStorm.wav"
     ]
   },
   "ui": {
