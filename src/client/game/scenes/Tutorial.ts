@@ -1,16 +1,15 @@
 import { Scene, GameObjects } from 'phaser';
 
-export class MainMenu extends Scene {
+export class Tutorial extends Scene {
   background: GameObjects.Image | null = null;
   logo: GameObjects.Image | null = null;
   title: GameObjects.Text | null = null;
   playBtn: GameObjects.Container | null = null;
   leaderboardBtn: GameObjects.Container | null = null;
   DailyChallengeBtn: GameObjects.Container | null = null;
-  tutorialBtn: GameObjects.Container | null = null;
 
   constructor() {
-    super('MainMenu');
+    super('Tutorial');
   }
 
   init(): void {
@@ -20,7 +19,6 @@ export class MainMenu extends Scene {
     this.leaderboardBtn = null;
     this.playBtn = null;
     this.DailyChallengeBtn = null;
-    this.tutorialBtn = null;
   }
 
   private createButton(
@@ -31,29 +29,23 @@ export class MainMenu extends Scene {
   ): GameObjects.Container {
     const { width, height } = this.scale;
     const baseFontSize = 20;
-    const btnWidth = 200;
+    const btnWidth = 180;
     const btnHeight = 50;
 
     const container = this.add.container(width / 2, height * yPercent);
 
-    let bgColor = alt ? 0xffffff : 0x330066;
+    let bgColor = alt ? 0x000000 : 0x330066;
     let borderColor = alt ? 0x330066 : 0x000000;
     let hoverColor = alt ? 0x222222 : 0x6600cc;
-    let textColor = alt ? '#000000' : '#ffffff';
+    let textColor = '#ffffff';
 
     const bg = this.add.rectangle(0, 0, btnWidth, btnHeight, bgColor, 1)
       .setStrokeStyle(3, borderColor)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', onClick)
-      .on('pointerover', () => {
-        bg.setFillStyle(hoverColor);
-        if (alt) label.setColor('#ffffff');  // text becomes white on hover
-      })
-      .on('pointerout', () => {
-        bg.setFillStyle(bgColor);
-        if (alt) label.setColor('#000000');  // text back to black
-      });
+      .on('pointerover', () => bg.setFillStyle(hoverColor))
+      .on('pointerout', () => bg.setFillStyle(bgColor));
 
     const label = this.add.text(0, 0, text, {
       fontFamily: 'Helvetica',
@@ -61,7 +53,6 @@ export class MainMenu extends Scene {
       color: textColor,
       align: 'center'
     }).setOrigin(0.5);
-
     container.add([bg, label]);
     return container;
   }
@@ -74,9 +65,8 @@ export class MainMenu extends Scene {
     this.DailyChallengeBtn = this.createButton('Try Daily Challenge', 0, true, () => this.scene.start('Ranked'));
     this.playBtn = this.createButton('Start Game', 0, false, () => this.scene.start('Casual'));
     this.leaderboardBtn = this.createButton('Leaderboard', 0, false, () => this.scene.start('Leaderboard'));
-    this.tutorialBtn = this.createButton('Tutorial', 0, false, () => this.scene.start('Tutorial'));
 
-    this.layoutButtonsVertically([this.DailyChallengeBtn, this.playBtn, this.leaderboardBtn, this.tutorialBtn], 0.5, 0.13);
+    this.layoutButtonsVertically([this.DailyChallengeBtn, this.playBtn, this.leaderboardBtn], 0.5, 0.13);
   }
 
   private refreshLayout(): void {
@@ -94,7 +84,7 @@ export class MainMenu extends Scene {
     this.logo.setPosition(width / 2, height * 0.35).setScale(scaleFactor);
 
     // ahora los botones se organizan automáticamente debajo del logo
-    const buttons = [this.DailyChallengeBtn, this.playBtn, this.leaderboardBtn, this.tutorialBtn].filter(Boolean) as GameObjects.Container[];
+    const buttons = [this.DailyChallengeBtn, this.playBtn, this.leaderboardBtn].filter(Boolean) as GameObjects.Container[];
     this.layoutButtonsVertically(buttons, 0.5, 0.13);
   }
 

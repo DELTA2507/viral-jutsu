@@ -1,71 +1,62 @@
 import { Scene } from 'phaser';
-import * as Phaser from 'phaser';
 
 export class GameOver extends Scene {
-  camera: Phaser.Cameras.Scene2D.Camera;
-  background: Phaser.GameObjects.Image;
-  gameover_text: Phaser.GameObjects.Text;
+  background: Phaser.GameObjects.Image | null = null;
+  gameover_text: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super('GameOver');
   }
 
   create() {
-    // Configure camera
-    this.camera = this.cameras.main;
-    this.camera.setBackgroundColor(0xff0000);
+    const { width, height } = this.scale;
 
-    // Background – create once, full-screen
-    // Background – center origin
-    this.background = this.add.image(0, 0, 'background')
+    // Dark background
+    this.background = this.add.image(width / 2, height / 2, 'background')
       .setOrigin(0.5)
       .setAlpha(0.5);
 
-    // "Game Over" text – created once and scaled responsively
-    this.gameover_text = this.add
-      .text(0, 0, 'Game Over', {
-        fontFamily: 'Arial Black',
-        fontSize: '64px',
-        color: '#ffffff',
-        stroke: '#000000',
-        strokeThickness: 8,
-        align: 'center',
-      })
-      .setOrigin(0.5);
+    // Semi-transparent overlay for contrast
+    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.4);
 
-    // Initial responsive layout
-    this.updateLayout(this.scale.width, this.scale.height);
+    // Game Over text
+    this.gameover_text = this.add.text(width / 2, height / 2 + 30, 'Game Over', {
+      fontFamily: 'Helvetica',
+      fontSize: '64px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 8,
+      align: 'center',
+    })
+    .setOrigin(0.5)
+    .setAlpha(0); // start invisible
 
-    // Update layout on canvas resize / orientation change
-    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
-      const { width, height } = gameSize;
-      this.updateLayout(width, height);
+    this.tweens.add({
+      targets: this.gameover_text,
+      y: height / 2,      // move to final position
+      alpha: 1,           // fade in
+      ease: 'Power2',
+      duration: 800,
     });
 
-    // Return to Main Menu on tap / click
-    this.input.once('pointerdown', () => {
-      this.scene.start('MainMenu');
-    });
+    // Responsive layout
+    this.updateLayout(width, height);
+    this.scale.on('resize', ({ width, height }: { width: number; height: number }) => this.updateLayout(width, height));
+
+    // Return to Main Menu on click
+    this.input.once('pointerdown', () => this.scene.start('MainMenu'));
   }
 
-  private updateLayout(width: number, height: number): void {
-    // Resize camera viewport to prevent black bars
+  private updateLayout(width: number, height: number) {
     this.cameras.resize(width, height);
 
-    // Stretch background to fill entire screen
     if (this.background) {
       const scale = Math.max(width / this.background.width, height / this.background.height);
-      this.background
-        .setPosition(width / 2, height / 2)
-        .setScale(scale);
+      this.background.setPosition(width / 2, height / 2).setScale(scale);
     }
 
-    // Compute scale factor (never enlarge above 1×)
-    const scaleFactor = Math.min(Math.min(width / 1024, height / 768), 1);
-
-    // Centre and scale the game-over text
     if (this.gameover_text) {
-      this.gameover_text.setPosition(width / 2, height / 2);
+      const scaleFactor = Math.min(width / 1024, height / 768, 1);
       this.gameover_text.setScale(scaleFactor);
     }
   }

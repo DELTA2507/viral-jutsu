@@ -10,7 +10,7 @@ interface GameEntity {
   powerUpId?: string; // only for power-ups
 }
 
-export class Game extends Scene {
+export class Casual extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;
   background: Phaser.GameObjects.Image;
   pointsCount = 0;
@@ -30,6 +30,10 @@ export class Game extends Scene {
   trail: Phaser.GameObjects.Graphics;
   trailLine: { x: number; y: number }[] = [];
 
+  private comboCount = 0; // agregalo al state del Game
+  private comboTimer = 0; // para resetear combos después de X segundos
+  private comboDuration = 2; // 2 segundos para seguir el combo
+
   private slowmoActive = false;
   private slowmoFactor = 0.5; // everything moves at 50% speed
 
@@ -37,7 +41,7 @@ export class Game extends Scene {
   private entityGrid: Map<string, GameEntity[]> = new Map();
   private cellSize = 100;
 
-  constructor() { super('Game'); }
+  constructor() { super('Casual'); }
 
   create() {
     this.gameTime = 60;
@@ -113,13 +117,21 @@ export class Game extends Scene {
   // --- TRAIL & CUT ---
   private updateTrail(x: number, y: number) {
     this.trailLine.push({ x, y });
-    if (this.trailLine.length > 10) this.trailLine.shift();
+    if (this.trailLine.length > 15) this.trailLine.shift(); // más puntos, línea más fluida
     this.trail.clear();
-    this.trail.lineStyle(4, 0x00ff00, 1);
+
     for (let i = 1; i < this.trailLine.length; i++) {
-      const prev = this.trailLine[i - 1]; const curr = this.trailLine[i];
-      if (prev && curr) { this.trail.moveTo(prev.x, prev.y); this.trail.lineTo(curr.x, curr.y); }
+        const prev = this.trailLine[i - 1];
+        const curr = this.trailLine[i];
+        if (!prev || !curr) continue;
+
+        const alpha = i / this.trailLine.length; // fade progresivo
+        const thickness = 3 + (i / this.trailLine.length) * 2; // grosor dinámico
+        this.trail.lineStyle(thickness, 0xffffff, alpha); // blanco
+        this.trail.moveTo(prev.x, prev.y);
+        this.trail.lineTo(curr.x, curr.y);
     }
+
     this.trail.strokePath();
   }
 
@@ -198,18 +210,29 @@ export class Game extends Scene {
 
     // --- POINTS / FAILS ONLY FOR NORMAL ENTITIES ---
     if (e.type === 'good') { 
-        this.pointsCount++;
-        this.gameTime += 10;
-        this.updatePointsCountText();
-        this.updateGameTimeText();
-        this.showTimeFeedback("+10", e.sprite.x, e.sprite.y, "#00ff00");
+      const basePoints = 10; // puntos por cada good
+      this.gameTime += 5;
+      this.comboCount++;
+      this.comboTimer = this.comboDuration;
+
+      let multiplier = 1 + (this.comboCount - 1) * 0.5; // +50% por combo
+      const pointsGained = Math.floor(basePoints * multiplier);
+
+      this.pointsCount += pointsGained;
+
+      this.updatePointsCountText();
+      this.updateGameTimeText();
+      this.showTimeFeedback(`+${pointsGained}`, e.sprite.x, e.sprite.y, "#00ff00");
+      this.showComboFeedback(`Combo x${multiplier.toFixed(1)}`, e.sprite.x, e.sprite.y - 30, "#ffff00");
     } else if (e.type === 'hazard') {
-        this.failsCount++;
-        this.gameTime -= 10;
-        this.updateFailsCountText();
-        this.updateGameTimeText();
-        this.showTimeFeedback("-10", e.sprite.x, e.sprite.y, "#ff0000ff");
-        if (this.failsCount >= 3) this.GameOver();
+      this.failsCount++;
+      this.comboCount = 0;  // reset combo
+      this.gameTime -= 10;
+      this.updateFailsCountText();
+      this.updateGameTimeText();
+      this.showTimeFeedback("-10", e.sprite.x, e.sprite.y, "#ff0000ff");
+      this.cameras.main.shake(150, 0.02); // 150ms de duración, intensidad 0.02
+      if (this.failsCount >= 3) this.GameOver();
     }
 
     // --- POWER-UP EFFECT ---
@@ -237,6 +260,12 @@ export class Game extends Scene {
     const dt = delta / 1000; 
     const { width, height } = this.scale;
 
+    // --- COMBO TIMER ---
+    this.comboTimer -= dt;
+    if (this.comboTimer <= 0 && this.comboCount > 0) {
+        this.comboCount = 0;
+    }
+
     this.gameTime -= dt;
     this.elapsedTime += dt; // tiempo total transcurrido
 
@@ -246,8 +275,8 @@ export class Game extends Scene {
     // --- spawn interval dinámico progresivo ---
     let baseInterval = 3; // spawn inicial cada 3s
     const steps = Math.floor(this.elapsedTime / 10); // cada 10s aumenta la dificultad
-    let spawnInterval = baseInterval - steps * 0.2; 
-    spawnInterval = Math.max(1, spawnInterval); // mínimo 1s
+    let spawnInterval = baseInterval - steps * 0.2;
+    spawnInterval = Phaser.Math.Clamp(spawnInterval, 1.2, 3); // nunca más rápido que 1.2s
     spawnInterval *= this.slowmoActive ? 1 / this.slowmoFactor : 1;
 
     this.spawnTimer += dt;
@@ -276,6 +305,15 @@ export class Game extends Scene {
       this.updateEntityGridPosition(e);
 
       if (e.sprite.y > height + 50 || e.sprite.x < -50 || e.sprite.x > width + 50) {
+        if (e.type === 'good') {
+            this.failsCount++;
+            this.comboCount = 0;
+            this.updateFailsCountText();
+            this.updateGameTimeText();
+            this.showTimeFeedback("-5", e.sprite.x, e.sprite.y, "#ff8800"); // feedback visual
+            if (this.failsCount >= 3) this.GameOver();
+        }
+
         this.removeEntityFromGrid(e);
         e.sprite.destroy();
         this.entities.splice(i, 1);
@@ -315,8 +353,19 @@ export class Game extends Scene {
   // --- ENTITY SPAWN ---
   spawnEntity(width: number, height: number) {
     const radius = Phaser.Math.Between(40, 60);
-    const x = Phaser.Math.Between(radius, width - radius); const y = height + radius;
-    const type: 'good' | 'hazard' = Math.random() < 0.8 ? 'good' : 'hazard';
+    let validPosition = false;
+    let attempts = 0;
+    let spawnX = Phaser.Math.Between(radius, width - radius);
+    while (!validPosition && attempts < 10) {
+      validPosition = !this.entities.some(e => e.type === 'hazard' && Math.abs(e.sprite.x - spawnX) < 80);
+      if (!validPosition) spawnX = Phaser.Math.Between(radius, width - radius);
+      attempts++;
+    }
+    const x = spawnX;
+    const y = height + radius;
+    const maxHazards = 2;
+    const hazardsOnScreen = this.entities.filter(e => e.type === 'hazard').length;
+    const type: 'good' | 'hazard' = (hazardsOnScreen >= maxHazards) ? 'good' : (Math.random() < 0.8 ? 'good' : 'hazard');
 
     // --- load icons from registry ---
     const subredditIcons: string[] = this.registry.get('subredditsIcons') || [];
@@ -329,7 +378,7 @@ export class Game extends Scene {
     const key = iconArray[Phaser.Math.Between(0, iconArray.length - 1)]; if (!key) return;
     const scaleFactor = this.getResponsiveScale(width);
 
-    const baseVy = -Math.sqrt(2 * 600 * Phaser.Math.Between(300, 500));
+    const baseVy = -Math.sqrt(2 * 600 * Phaser.Math.Between(400, 500));
     const sprite = this.add.image(x, y, key).setDisplaySize(radius * 2 * scaleFactor, radius * 2 * scaleFactor).setInteractive({ useHandCursor: true }).setAlpha(1);
     const entity: GameEntity = { 
       sprite, vx: Phaser.Math.Between(-100, 100), 
@@ -337,6 +386,11 @@ export class Game extends Scene {
       rotationSpeed: Phaser.Math.FloatBetween(-5, 5), 
       type, 
       radius: sprite.displayWidth / 2 };
+    if (type === 'hazard') {
+      entity.vy *= Phaser.Math.FloatBetween(0.8, 1.2);
+      entity.vx *= Phaser.Math.FloatBetween(0.5, 1.5);
+    }
+    entity.vy *= Phaser.Math.FloatBetween(1.0, 1.3);
     sprite.on('pointerdown', () => this.cutEntity(entity));
     this.addEntityBorder(entity);
     this.entities.push(entity);
@@ -393,9 +447,16 @@ export class Game extends Scene {
       // puntos + tiempo + feedback
       this.pointsCount++;
       this.gameTime += 10;
+
+      this.comboCount++;
+      this.comboTimer = this.comboDuration;
+      let multiplier = 1 + (this.comboCount - 1) * 0.5; // ejemplo: +50% por cada combo
+      this.pointsCount += Math.floor(this.pointsCount * (multiplier - 1));
+
       this.updatePointsCountText();
       this.updateGameTimeText();
       this.showTimeFeedback("+10", sprite.x, sprite.y, "#00ff00");
+      this.showComboFeedback(`Combo x${multiplier.toFixed(1)}`, e.sprite.x, e.sprite.y - 30, "#ffff00");
 
       sprite.destroy();
       this.removeEntityFromGrid(e);
@@ -457,6 +518,35 @@ export class Game extends Scene {
       duration: 800,
       ease: 'Cubic.easeOut',
       onComplete: () => floating.destroy()
+    });
+  }
+
+  private showComboFeedback(text: string, x: number, y: number, color: string) {
+    const floating = this.add.text(x, y, text, {
+      fontFamily: 'Helvetica',
+      fontSize: 40,
+      color,
+      stroke: '#000',
+      strokeThickness: 3
+    }).setOrigin(0.5).setScale(0); // start tiny for the pop
+
+    // --- jump + scale tween ---
+    this.tweens.add({
+      targets: floating,
+      y: y - 30,         // small jump
+      scale: 1.3,        // pop up bigger
+      alpha: 1,
+      duration: 200,
+      ease: 'Back.Out',  // elastic pop
+      yoyo: true,        // jump back a bit
+      onComplete: () => {
+        this.tweens.add({ 
+          targets: floating,
+          alpha: 0,      // fade out
+          duration: 300,
+          onComplete: () => floating.destroy()
+        });
+      }
     });
   }
 

@@ -133,4 +133,19 @@ export class Leaderboard extends Scene {
       this.uiContainer.setPosition(width / 2, height / 2);
     }
   }
+
+  override update(_time: number, _delta: number) {
+    if (!this.background) return;
+
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
+
+    const sineAmplitudeX = 5; // máximo desplazamiento horizontal
+    const sineAmplitudeY = 3; // máximo desplazamiento vertical
+    const sineSpeedX = 0.002;  // velocidad horizontal
+    const sineSpeedY = 0.003;  // velocidad vertical
+
+    this.background.x = centerX + Math.sin(_time * sineSpeedX) * sineAmplitudeX;
+    this.background.y = centerY + Math.sin(_time * sineSpeedY) * sineAmplitudeY;
+  }
 }
