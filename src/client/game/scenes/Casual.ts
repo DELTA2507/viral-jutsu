@@ -11,6 +11,8 @@ interface GameEntity {
 }
 
 export class Casual extends Scene {
+  private isPaused = false;
+
   camera: Phaser.Cameras.Scene2D.Camera;
   background: Phaser.GameObjects.Image;
   pointsCount = 0;
@@ -20,7 +22,6 @@ export class Casual extends Scene {
   gameTime = 60;
   elapsedTime = 0; // acumula tiempo transcurrido
   gameTimeText: Phaser.GameObjects.Text;
-  goButton: Phaser.GameObjects.Text;
 
   entities: GameEntity[] = [];
   spawnTimer = 0;
@@ -64,20 +65,19 @@ export class Casual extends Scene {
   }
 
   private setupUI() {
-    const textStyle = { fontFamily: 'Helvetica', fontSize: 25, color: '#ffffffff', stroke: '#000', strokeThickness: 4 };
+    const textStyle = { fontFamily: 'Helvetica', fontSize: 25, color: '#ffffffff', stroke: '#000', strokeThickness: 4, shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 2, stroke: true, fill: true }};
     this.pointsCountText = this.add.text(20, 20, `Points: ${this.pointsCount}`, textStyle);
     this.failsCountText = this.add.text(20, 60, `Fails: ${this.failsCount}`, textStyle);
     this.gameTimeText = this.add.text(this.scale.width - 20, 20, `Time: 0`, { ...textStyle, align: 'right' }).setOrigin(1, 0);
-
-    this.goButton = this.add.text(this.scale.width / 2, this.scale.height * 0.75, 'Game Over', {
-      fontFamily: 'Helvetica', fontSize: 36, color: '#fff', backgroundColor: '#444', padding: { x: 25, y: 12 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-      .on('pointerover', () => this.goButton.setStyle({ backgroundColor: '#555' }))
-      .on('pointerout', () => this.goButton.setStyle({ backgroundColor: '#444' }))
-      .on('pointerdown', () => this.GameOver());
   }
 
   private setupInput() {
+    if (this.input.keyboard) {
+      this.input.keyboard.on('keydown-SPACE', () => {
+        this.togglePause();
+      });
+    }
+
     this.input.on('pointerdown', () => (this.isCutting = true));
     this.input.on('pointerup', () => { this.isCutting = false; this.trail.clear(); this.trailLine = []; });
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
@@ -245,8 +245,18 @@ export class Casual extends Scene {
         const effect = powerUpEffects[e.powerUpId];
         if (effect) effect();
     } else {
-        // --- PLAY CUT SOUND FOR NON-POWERUPS ONLY ---
-        let cutCategory = e.type === 'hazard' ? 'hazard' : 'default';
+        let cutCategory;
+        switch (e.type) {
+          case 'hazard':
+            cutCategory = 'hazard';
+            break;
+          case 'powerUp':
+            cutCategory = 'powerUp';
+            break;
+          default:
+            cutCategory = 'default';
+            break;
+        }
         const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
         if (cutSounds.length) {
             const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
@@ -561,12 +571,20 @@ export class Casual extends Scene {
       this.background.setScale(scale);
     }
 
-    // GO button
-    this.goButton.setPosition(width / 2, height * 0.75).setScale(Math.min(Math.min(width / 1024, height / 768), 1));
-
     // top-right time
     if (this.gameTimeText) {
       this.gameTimeText.setPosition(width - 20, 20);
+    }
+  }
+
+  togglePause() {
+    if (!this.isPaused) {
+      this.isPaused = true;
+      this.scene.pause();
+      this.scene.launch('PauseMenu', { parentScene: this });
+    } else {
+      this.isPaused = false;
+      this.scene.resume();
     }
   }
 

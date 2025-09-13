@@ -46,7 +46,7 @@ export class Leaderboard extends Scene {
     this.uiContainer.add(this.title);
 
     // Back button OUTSIDE container
-    this.backBtn = this.add.text(width / 2, height * 0.9, 'Volver al menú', {
+    this.backBtn = this.add.text(width / 2, height * 0.9, '<- Volver al menú', {
       fontFamily: 'Helvetica',
       fontSize: '32px',
       color: '#ffffff',
@@ -54,9 +54,16 @@ export class Leaderboard extends Scene {
       strokeThickness: 6,
     }).setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
-      .on('pointerover', () => this.backBtn!.setStyle({ color: '#ffd700' }))
+      .on('pointerover', () => this.backBtn!.setStyle({ color: '#a741ebff' }))
       .on('pointerout', () => this.backBtn!.setStyle({ color: '#ffffff' }))
-      .once('pointerdown', () => this.scene.start('MainMenu'));
+      .once('pointerdown', () => this.scene.start('MainMenu'))
+      .on('pointerdown', () => {
+        const uiButtonSounds = this.registry.get('cuts_defaultSounds') || [];
+        if (uiButtonSounds.length) {
+          const soundKey = uiButtonSounds[Phaser.Math.Between(0, uiButtonSounds.length - 1)];
+          this.sound.play(soundKey);
+        }
+      });
 
     this.scale.on('resize', () => this.onResize());
 
@@ -77,13 +84,26 @@ export class Leaderboard extends Scene {
     top.forEach((entry, i) => {
       const y = startY + i * spacing;
 
-      const bg = this.add.rectangle(0, y, 420, 50, 0xffffff).setOrigin(0.5);
-      bg.setStrokeStyle(2, 0xffffff); // borde blanco
+      let bgColor = 0xffffff;
+      let borderColor = 0xffffff;
+      let textColor = '#4e0e78';
+      let prefix = '';
 
-      const text = this.add.text(0, y, `${i + 1}. ${entry.username} — ${entry.score}`, {
+      if (i === 0) {
+        bgColor = 0xffd700; borderColor = 0xb8860b; textColor = '#000000'; prefix = '🥇 ';
+      } else if (i === 1) {
+        bgColor = 0xc0c0c0; borderColor = 0x808080; textColor = '#000000'; prefix = '🥈 ';
+      } else if (i === 2) {
+        bgColor = 0xcd7f32; borderColor = 0x8b4513; textColor = '#000000'; prefix = '🥉 ';
+      }
+
+      const bg = this.add.rectangle(0, y, 420, 50, bgColor).setOrigin(0.5);
+      bg.setStrokeStyle(2, borderColor);
+
+      const text = this.add.text(0, y, `${prefix}${i + 1}. ${entry.username} — ${entry.score}`, {
         fontFamily: 'Helvetica',
         fontSize: '28px',
-        color: '#4e0e78ff', // texto morado oscuro
+        color: textColor,
       }).setOrigin(0.5);
 
       this.uiContainer!.add([bg, text]);
@@ -93,13 +113,14 @@ export class Leaderboard extends Scene {
     // render me always
     if (me) {
       const y = startY + top.length * spacing + 20;
-      const bg = this.add.rectangle(0, y, 420, 50, 0xffffff).setOrigin(0.5);
-      bg.setStrokeStyle(2, 0xffffff); // borde blanco
 
-      const text = this.add.text(0, y, `${me.rank}. ${me.username} — ${me.score}`, {
+      const bg = this.add.rectangle(0, y, 420, 50, 0x4b0082).setOrigin(0.5);
+      bg.setStrokeStyle(3, 0xffffff);
+
+      const text = this.add.text(0, y, `⭐ ${me.rank}. ${me.username} — ${me.score}`, {
         fontFamily: 'Helvetica',
         fontSize: '28px',
-        color: '#4e0d3e', // morado oscuro
+        color: '#ffffff',
       }).setOrigin(0.5);
 
       this.uiContainer.add([bg, text]);

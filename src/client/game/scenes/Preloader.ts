@@ -32,13 +32,20 @@ export class Preloader extends Scene {
     this.load.on('progress', (progress: number) => {
       bar.width = 4 + (width * 0.6 - 8) * progress;
     });
+
+    // --- inicializar sonido ---
+    if (this.registry.get('SoundActive') === undefined) {
+      this.registry.set('SoundActive', true); // por defecto activado
+    }
   }
 
   preload() {
-    this.load.image('reddit_snoo', 'assets/images/subreddits/reddit_snoo.png');
-    this.load.image('logo', 'assets/images/logo.png');
-    this.load.json('icons', 'assets/images/icons.json');
-    this.load.json('sounds', 'assets/sounds/sounds.json'); // <-- added
+    this.load.image('reddit_snoo', '/assets/images/subreddits/reddit_snoo.png');
+    this.load.image('sound_on', '/assets/images/sound_on.png');
+    this.load.image('sound_off', '/assets/images/sound_off.png');
+    this.load.image('logo', '/assets/images/logo.png');
+    this.load.json('icons', '/assets/images/icons.json');
+    this.load.json('sounds', '/assets/sounds/sounds.json'); // <-- added
 
     this.load.on('filecomplete-json-icons', () => {
       const json: Record<string, string[]> = this.cache.json.get('icons');

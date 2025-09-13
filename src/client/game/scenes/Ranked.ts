@@ -11,16 +11,16 @@ interface GameEntity {
 }
 
 export class Ranked extends Scene {
+  private isPaused = false;
+
   camera: Phaser.Cameras.Scene2D.Camera;
   background: Phaser.GameObjects.Image;
   pointsCount = 0;
   pointsCountText: Phaser.GameObjects.Text;
   failsCount = 0;
   failsCountText: Phaser.GameObjects.Text;
-  gameTime = 60;
   elapsedTime = 0; // acumula tiempo transcurrido
-  gameTimeText: Phaser.GameObjects.Text;
-  goButton: Phaser.GameObjects.Text;
+  elapsedTimeText: Phaser.GameObjects.Text;
 
   entities: GameEntity[] = [];
   spawnTimer = 0;
@@ -44,7 +44,6 @@ export class Ranked extends Scene {
   constructor() { super('Ranked'); }
 
   create() {
-    this.gameTime = 60;
     this.setupCameraAndBackground();
     this.setupUI();
     this.setupInput();
@@ -64,20 +63,19 @@ export class Ranked extends Scene {
   }
 
   private setupUI() {
-    const textStyle = { fontFamily: 'Helvetica', fontSize: 25, color: '#ffffffff', stroke: '#000', strokeThickness: 4 };
+    const textStyle = { fontFamily: 'Helvetica', fontSize: 25, color: '#ffffffff', stroke: '#000', strokeThickness: 4, shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 2, stroke: true, fill: true }};
     this.pointsCountText = this.add.text(20, 20, `Points: ${this.pointsCount}`, textStyle);
     this.failsCountText = this.add.text(20, 60, `Fails: ${this.failsCount}`, textStyle);
-    this.gameTimeText = this.add.text(this.scale.width - 20, 20, `Time: 0`, { ...textStyle, align: 'right' }).setOrigin(1, 0);
-
-    this.goButton = this.add.text(this.scale.width / 2, this.scale.height * 0.75, 'Game Over', {
-      fontFamily: 'Helvetica', fontSize: 36, color: '#fff', backgroundColor: '#444', padding: { x: 25, y: 12 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-      .on('pointerover', () => this.goButton.setStyle({ backgroundColor: '#555' }))
-      .on('pointerout', () => this.goButton.setStyle({ backgroundColor: '#444' }))
-      .on('pointerdown', () => this.GameOver());
+    this.elapsedTimeText = this.add.text(this.scale.width - 20, 20, `Time: 0`, { ...textStyle, align: 'right' }).setOrigin(1, 0);
   }
 
   private setupInput() {
+    if (this.input.keyboard) {
+      this.input.keyboard.on('keydown-SPACE', () => {
+        this.togglePause();
+      });
+    }
+    
     this.input.on('pointerdown', () => (this.isCutting = true));
     this.input.on('pointerup', () => { this.isCutting = false; this.trail.clear(); this.trailLine = []; });
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
@@ -108,7 +106,6 @@ export class Ranked extends Scene {
 
     this.pointsCount = 0;
     this.failsCount = 0;
-    this.gameTime = 60;
     this.updatePointsCountText();
     this.updateFailsCountText();
     this.scene.start('GameOver');
@@ -211,7 +208,6 @@ export class Ranked extends Scene {
     // --- POINTS / FAILS ONLY FOR NORMAL ENTITIES ---
     if (e.type === 'good') { 
       const basePoints = 10; // puntos por cada good
-      this.gameTime += 5;
       this.comboCount++;
       this.comboTimer = this.comboDuration;
 
@@ -221,16 +217,11 @@ export class Ranked extends Scene {
       this.pointsCount += pointsGained;
 
       this.updatePointsCountText();
-      this.updateGameTimeText();
-      this.showTimeFeedback(`+${pointsGained}`, e.sprite.x, e.sprite.y, "#00ff00");
       this.showComboFeedback(`Combo x${multiplier.toFixed(1)}`, e.sprite.x, e.sprite.y - 30, "#ffff00");
     } else if (e.type === 'hazard') {
       this.failsCount++;
       this.comboCount = 0;  // reset combo
-      this.gameTime -= 10;
       this.updateFailsCountText();
-      this.updateGameTimeText();
-      this.showTimeFeedback("-10", e.sprite.x, e.sprite.y, "#ff0000ff");
       this.cameras.main.shake(150, 0.02); // 150ms de duración, intensidad 0.02
       if (this.failsCount >= 3) this.GameOver();
     }
@@ -245,8 +236,18 @@ export class Ranked extends Scene {
         const effect = powerUpEffects[e.powerUpId];
         if (effect) effect();
     } else {
-        // --- PLAY CUT SOUND FOR NON-POWERUPS ONLY ---
-        let cutCategory = e.type === 'hazard' ? 'hazard' : 'default';
+        let cutCategory;
+        switch (e.type) {
+          case 'hazard':
+            cutCategory = 'hazard';
+            break;
+          case 'powerUp':
+            cutCategory = 'powerUp';
+            break;
+          default:
+            cutCategory = 'default';
+            break;
+        }
         const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
         if (cutSounds.length) {
             const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
@@ -265,11 +266,9 @@ export class Ranked extends Scene {
     if (this.comboTimer <= 0 && this.comboCount > 0) {
         this.comboCount = 0;
     }
-
-    this.gameTime -= dt;
     this.elapsedTime += dt; // tiempo total transcurrido
 
-    this.gameTimeText.setText(`Time: ${Math.floor(this.gameTime)}`);
+    this.elapsedTimeText.setText(`Time: ${Math.floor(this.elapsedTime)}`);
     this.powerUpTimer += dt;
 
     // --- spawn interval dinámico progresivo ---
@@ -309,8 +308,6 @@ export class Ranked extends Scene {
             this.failsCount++;
             this.comboCount = 0;
             this.updateFailsCountText();
-            this.updateGameTimeText();
-            this.showTimeFeedback("-5", e.sprite.x, e.sprite.y, "#ff8800"); // feedback visual
             if (this.failsCount >= 3) this.GameOver();
         }
 
@@ -446,7 +443,6 @@ export class Ranked extends Scene {
 
       // puntos + tiempo + feedback
       this.pointsCount++;
-      this.gameTime += 10;
 
       this.comboCount++;
       this.comboTimer = this.comboDuration;
@@ -454,8 +450,6 @@ export class Ranked extends Scene {
       this.pointsCount += Math.floor(this.pointsCount * (multiplier - 1));
 
       this.updatePointsCountText();
-      this.updateGameTimeText();
-      this.showTimeFeedback("+10", sprite.x, sprite.y, "#00ff00");
       this.showComboFeedback(`Combo x${multiplier.toFixed(1)}`, e.sprite.x, e.sprite.y - 30, "#ffff00");
 
       sprite.destroy();
@@ -502,25 +496,6 @@ export class Ranked extends Scene {
     console.log('Shield activated! (not implemented)');
   }
 
-  private showTimeFeedback(text: string, x: number, y: number, color: string) {
-    const floating = this.add.text(x, y, text, {
-      fontFamily: 'Helvetica',
-      fontSize: 35,
-      color,
-      stroke: '#000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-
-    this.tweens.add({
-      targets: floating,
-      y: y - 50,       // float upward
-      alpha: 0,        // fade out
-      duration: 800,
-      ease: 'Cubic.easeOut',
-      onComplete: () => floating.destroy()
-    });
-  }
-
   private showComboFeedback(text: string, x: number, y: number, color: string) {
     const floating = this.add.text(x, y, text, {
       fontFamily: 'Helvetica',
@@ -561,17 +536,24 @@ export class Ranked extends Scene {
       this.background.setScale(scale);
     }
 
-    // GO button
-    this.goButton.setPosition(width / 2, height * 0.75).setScale(Math.min(Math.min(width / 1024, height / 768), 1));
-
     // top-right time
-    if (this.gameTimeText) {
-      this.gameTimeText.setPosition(width - 20, 20);
+    if (this.elapsedTimeText) {
+      this.elapsedTimeText.setPosition(width - 20, 20);
+    }
+  }
+
+  togglePause() {
+    if (!this.isPaused) {
+      this.isPaused = true;
+      this.scene.pause();
+      this.scene.launch('PauseMenu', { parentScene: this });
+    } else {
+      this.isPaused = false;
+      this.scene.resume();
     }
   }
 
   private getResponsiveScale(width: number) { if (width < 600) return 0.8; if (width < 1200) return 1.2; return 1.6; }
   updatePointsCountText() { this.pointsCountText.setText(`Points: ${this.pointsCount}`); }
   updateFailsCountText() { this.failsCountText.setText(`Fails: ${this.failsCount}`); }
-  updateGameTimeText() { this.gameTimeText.setText(`Time: ${Math.max(0, Math.floor(this.gameTime))}`); }
 }

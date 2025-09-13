@@ -27,40 +27,55 @@ export class MainMenu extends Scene {
     text: string,
     yPercent: number,
     alt: boolean = false,
-    onClick: () => void
+    onClick: () => void,
+    fixedWidth: number = 250,
+    fixedHeight: number = 60
   ): GameObjects.Container {
     const { width, height } = this.scale;
     const baseFontSize = 20;
-    const btnWidth = 200;
-    const btnHeight = 50;
 
     const container = this.add.container(width / 2, height * yPercent);
+
+    const label = this.add.text(0, 0, text, {
+      fontFamily: 'Helvetica',
+      fontSize: `${baseFontSize}px`,
+      color: alt ? '#000000' : '#ffffff',
+      align: 'center',
+      stroke: alt ? '#ffffff' : '#000000',
+      strokeThickness: 3,
+    })
+    .setOrigin(0.5);
+
+    let btnWidth = fixedWidth;
+    let btnHeight = fixedHeight;
 
     let bgColor = alt ? 0xffffff : 0x330066;
     let borderColor = alt ? 0x330066 : 0x000000;
     let hoverColor = alt ? 0x222222 : 0x6600cc;
-    let textColor = alt ? '#000000' : '#ffffff';
 
     const bg = this.add.rectangle(0, 0, btnWidth, btnHeight, bgColor, 1)
       .setStrokeStyle(3, borderColor)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
-      .on('pointerdown', onClick)
       .on('pointerover', () => {
         bg.setFillStyle(hoverColor);
-        if (alt) label.setColor('#ffffff');  // text becomes white on hover
+        if (alt) label.setColor('#ffffff').setStroke('#000000', 3);
       })
       .on('pointerout', () => {
         bg.setFillStyle(bgColor);
-        if (alt) label.setColor('#000000');  // text back to black
+        if (alt) label.setColor('#000000').setStroke('#ffffff', 3);
+      })
+      .on('pointerdown', () => {
+        const uiButtonSounds = this.registry.get('cuts_defaultSounds') || [];
+        if (uiButtonSounds.length) {
+          const soundKey = uiButtonSounds[Phaser.Math.Between(0, uiButtonSounds.length - 1)];
+          this.sound.play(soundKey);
+        }
+        onClick();
       });
 
-    const label = this.add.text(0, 0, text, {
-      fontFamily: 'Helvetica',
-      fontSize: `${baseFontSize}px`,
-      color: textColor,
-      align: 'center'
-    }).setOrigin(0.5);
+    (container as any).bg = bg;
+    (container as any).label = label;
 
     container.add([bg, label]);
     return container;
@@ -71,10 +86,10 @@ export class MainMenu extends Scene {
     this.scale.on('resize', () => this.refreshLayout());
 
     // replace old text buttons with container buttons
-    this.DailyChallengeBtn = this.createButton('Try Daily Challenge', 0, true, () => this.scene.start('Ranked'));
-    this.playBtn = this.createButton('Start Game', 0, false, () => this.scene.start('Casual'));
-    this.leaderboardBtn = this.createButton('Leaderboard', 0, false, () => this.scene.start('Leaderboard'));
-    this.tutorialBtn = this.createButton('Tutorial', 0, false, () => this.scene.start('Tutorial'));
+    this.DailyChallengeBtn = this.createButton('⚔️ Try Daily Challenge', 0, true, () => this.scene.start('Ranked'));
+    this.playBtn = this.createButton('🕹️ Start Game', 0, false, () => this.scene.start('Casual'));
+    this.leaderboardBtn = this.createButton('🏆 Leaderboard', 0, false, () => this.scene.start('Leaderboard'));
+    this.tutorialBtn = this.createButton('💡 Tutorial', 0, false, () => this.scene.start('Tutorial'));
 
     this.layoutButtonsVertically([this.DailyChallengeBtn, this.playBtn, this.leaderboardBtn, this.tutorialBtn], 0.5, 0.13);
   }
@@ -93,8 +108,15 @@ export class MainMenu extends Scene {
     if (!this.logo) this.logo = this.add.image(0, 0, 'logo');
     this.logo.setPosition(width / 2, height * 0.35).setScale(scaleFactor);
 
-    // ahora los botones se organizan automáticamente debajo del logo
     const buttons = [this.DailyChallengeBtn, this.playBtn, this.leaderboardBtn, this.tutorialBtn].filter(Boolean) as GameObjects.Container[];
+
+    buttons.forEach((btn: Phaser.GameObjects.Container) => {
+      const bg = btn.getByName('bg') as Phaser.GameObjects.Rectangle;
+      if (bg) {
+        bg.setSize(250, 60);
+      }
+    });
+
     this.layoutButtonsVertically(buttons, 0.5, 0.13);
   }
 
