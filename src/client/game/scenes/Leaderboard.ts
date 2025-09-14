@@ -57,10 +57,13 @@ export class Leaderboard extends Scene {
       .on('pointerout', () => this.backBtn!.setStyle({ color: '#ffffff' }))
       .once('pointerdown', () => this.scene.start('MainMenu'))
       .on('pointerdown', () => {
-        const uiButtonSounds = this.registry.get('cuts_defaultSounds') || [];
-        if (uiButtonSounds.length) {
-          const soundKey = uiButtonSounds[Phaser.Math.Between(0, uiButtonSounds.length - 1)];
-          this.sound.play(soundKey);
+        const soundActive = this.registry.get('SoundActive');
+        if (soundActive) {
+          const uiButtonSounds = this.registry.get('cuts_defaultSounds') || [];
+          if (uiButtonSounds.length) {
+            const soundKey = uiButtonSounds[Phaser.Math.Between(0, uiButtonSounds.length - 1)];
+            this.sound.play(soundKey);
+          }
         }
       });
 

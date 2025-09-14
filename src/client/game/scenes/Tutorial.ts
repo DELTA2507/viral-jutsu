@@ -258,10 +258,13 @@ export class Tutorial extends Scene {
       case 'powerUp': cutCategory = 'powerUp'; break;
       default: cutCategory = 'default'; break;
     }
-    const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
-    if (cutSounds.length) {
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
+      if (cutSounds.length) {
         const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
         this.sound.play(soundKey);
+      }
     }
   }
 

@@ -5,6 +5,8 @@ export class MainMenu extends Scene {
   private dailyChallengeContainer: Phaser.GameObjects.Container | null = null;
   private dailyChallengeTimerEvent?: Phaser.Time.TimerEvent;
 
+  isPaused: boolean = false;
+
   background: GameObjects.Image | null = null;
   logo: GameObjects.Image | null = null;
   title: GameObjects.Text | null = null;
@@ -70,10 +72,13 @@ export class MainMenu extends Scene {
         if (alt) label.setColor('#000000').setStroke('#ffffff', 3);
       })
       .on('pointerdown', () => {
-        const uiButtonSounds = this.registry.get('cuts_defaultSounds') || [];
-        if (uiButtonSounds.length) {
-          const soundKey = uiButtonSounds[Phaser.Math.Between(0, uiButtonSounds.length - 1)];
-          this.sound.play(soundKey);
+        const soundActive = this.registry.get('SoundActive');
+        if (soundActive) {
+            const uiButtonSounds = this.registry.get('cuts_defaultSounds') || [];
+            if (uiButtonSounds.length) {
+                const soundKey = uiButtonSounds[Phaser.Math.Between(0, uiButtonSounds.length - 1)];
+                this.sound.play(soundKey);
+            }
         }
         onClick();
       });
@@ -86,6 +91,12 @@ export class MainMenu extends Scene {
   }
 
   create() {
+    if (this.input.keyboard) {
+      this.input.keyboard.on('keydown-SPACE', () => {
+        this.togglePause();
+      });
+    }
+    
     this.refreshLayout();
     this.scale.on('resize', () => this.refreshLayout());
 
@@ -166,7 +177,7 @@ export class MainMenu extends Scene {
       .setOrigin(0.5)
       .setStrokeStyle(3, 0xffffff);
 
-    let nameText = this.add.text(0, -35, `⚔️ ${challenge?.name ?? 'No Challenge'}`, {
+    let nameText = this.add.text(0, -35, `⚔️ ${challenge?.name ?? 'No Challenge'} ⚔️`, {
       fontFamily: 'Helvetica',
       fontSize: '28px',
       color: '#ffffff',
@@ -175,7 +186,7 @@ export class MainMenu extends Scene {
       strokeThickness: 4,
     }).setOrigin(0.5);
 
-    let descText = this.add.text(0, 0, challenge?.description ?? 'No daily challenge available.', {
+    let descText = this.add.text(0, 5, challenge?.description ?? 'No daily challenge available.', {
       fontFamily: 'Helvetica',
       fontSize: '18px',
       color: '#ffffaa',
@@ -214,5 +225,16 @@ export class MainMenu extends Scene {
 
     container.add([bg, nameText, descText, timerText]);
     this.dailyChallengeContainer = container;
+  }
+
+  togglePause() {
+    if (!this.isPaused) {
+      this.isPaused = true;
+      this.scene.pause();
+      this.scene.launch('PauseMenu', { parentScene: this });
+    } else {
+      this.isPaused = false;
+      this.scene.resume();
+    }
   }
 }

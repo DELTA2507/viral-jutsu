@@ -265,10 +265,13 @@ export class Ranked extends Scene {
             cutCategory = 'default';
             break;
         }
-        const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
-        if (cutSounds.length) {
-            const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
-            this.sound.play(soundKey);
+        const soundActive = this.registry.get('SoundActive');
+        if (soundActive) {
+          const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
+          if (cutSounds.length) {
+              const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
+              this.sound.play(soundKey);
+          }
         }
     }
   }
@@ -415,10 +418,13 @@ export class Ranked extends Scene {
     this.addEntityToGrid(entity);
 
     // pick a jump sound if it exists
-    const jumpSounds = this.registry.get('effects_jumpSounds') || [];
-    if (jumpSounds.length) {
-      const soundKey = jumpSounds[Phaser.Math.Between(0, jumpSounds.length - 1)];
-      this.sound.play(soundKey);
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const jumpSounds = this.registry.get('effects_jumpSounds') || [];
+      if (jumpSounds.length) {
+        const soundKey = jumpSounds[Phaser.Math.Between(0, jumpSounds.length - 1)];
+        this.sound.play(soundKey);
+      }
     }
   }
 
@@ -478,10 +484,13 @@ export class Ranked extends Scene {
       this.entities.splice(i, 1);
     }
 
-    const kunaiSounds: string[] = this.registry.get('powerUps_kunaiStormSounds') || [];
-    if (kunaiSounds.length) {
-      const soundKey = kunaiSounds[Phaser.Math.Between(0, kunaiSounds.length - 1)];
-      if (soundKey) this.sound.play(soundKey);
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const kunaiSounds: string[] = this.registry.get('powerUps_kunaiStormSounds') || [];
+      if (kunaiSounds.length) {
+        const soundKey = kunaiSounds[Phaser.Math.Between(0, kunaiSounds.length - 1)];
+        if (soundKey) this.sound.play(soundKey);
+      }
     }
   }
 
@@ -506,10 +515,13 @@ export class Ranked extends Scene {
       this.camera.setBackgroundColor(0x222222);
     });
 
-    const slowmoSounds: string[] = this.registry.get('powerUps_SlowmoSounds') || [];
-    if (slowmoSounds.length) {
-      const soundKey = slowmoSounds[Phaser.Math.Between(0, slowmoSounds.length - 1)]!;
-      this.sound.play(soundKey);
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const slowmoSounds: string[] = this.registry.get('powerUps_SlowmoSounds') || [];
+      if (slowmoSounds.length) {
+        const soundKey = slowmoSounds[Phaser.Math.Between(0, slowmoSounds.length - 1)]!;
+        this.sound.play(soundKey);
+      }
     }
   }
 

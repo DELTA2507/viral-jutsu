@@ -94,7 +94,7 @@ export class Casual extends Scene {
     this.updatePointsCountText();
     this.updateFailsCountText();
     this.updateGameTimeText();
-    this.scene.start('Casual'); // reinicia el modo casual desde cero
+    this.scene.start('GameOver'); // reinicia el modo casual desde cero
   }
 
   // --- TRAIL & CUT ---
@@ -240,10 +240,13 @@ export class Casual extends Scene {
             cutCategory = 'default';
             break;
         }
-        const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
-        if (cutSounds.length) {
-            const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
-            this.sound.play(soundKey);
+        const soundActive = this.registry.get('SoundActive');
+        if (soundActive) {
+          const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
+          if (cutSounds.length) {
+              const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
+              this.sound.play(soundKey);
+          }
         }
     }
   }
@@ -281,7 +284,7 @@ export class Casual extends Scene {
 
     if (this.powerUpTimer > this.powerUpInterval) {
       this.powerUpTimer = 0;
-      this.spawnPowerUp(width, height);
+      this.spawnPowerUp(width);
     }
 
     for (let i = this.entities.length - 1; i >= 0; i--) {
@@ -314,7 +317,7 @@ export class Casual extends Scene {
     }
   }
 
-  spawnPowerUp(width: number, height: number) {
+  spawnPowerUp(width: number) {
     const powerUpIcons: string[] = this.registry.get('powerUpsIcons') || [];
     if (!powerUpIcons.length) return;
 
@@ -390,10 +393,13 @@ export class Casual extends Scene {
     this.addEntityToGrid(entity);
 
     // pick a jump sound if it exists
-    const jumpSounds = this.registry.get('effects_jumpSounds') || [];
-    if (jumpSounds.length) {
-      const soundKey = jumpSounds[Phaser.Math.Between(0, jumpSounds.length - 1)];
-      this.sound.play(soundKey);
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const jumpSounds = this.registry.get('effects_jumpSounds') || [];
+      if (jumpSounds.length) {
+        const soundKey = jumpSounds[Phaser.Math.Between(0, jumpSounds.length - 1)];
+        this.sound.play(soundKey);
+      }
     }
   }
 
@@ -456,10 +462,13 @@ export class Casual extends Scene {
       this.entities.splice(i, 1);
     }
 
-    const kunaiSounds: string[] = this.registry.get('powerUps_kunaiStormSounds') || [];
-    if (kunaiSounds.length) {
-      const soundKey = kunaiSounds[Phaser.Math.Between(0, kunaiSounds.length - 1)];
-      if (soundKey) this.sound.play(soundKey);
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const kunaiSounds: string[] = this.registry.get('powerUps_kunaiStormSounds') || [];
+      if (kunaiSounds.length) {
+        const soundKey = kunaiSounds[Phaser.Math.Between(0, kunaiSounds.length - 1)];
+        if (soundKey) this.sound.play(soundKey);
+      }
     }
   }
 
@@ -484,10 +493,13 @@ export class Casual extends Scene {
       this.camera.setBackgroundColor(0x222222);
     });
 
-    const slowmoSounds: string[] = this.registry.get('powerUps_SlowmoSounds') || [];
-    if (slowmoSounds.length) {
-      const soundKey = slowmoSounds[Phaser.Math.Between(0, slowmoSounds.length - 1)]!;
-      this.sound.play(soundKey);
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const slowmoSounds: string[] = this.registry.get('powerUps_SlowmoSounds') || [];
+      if (slowmoSounds.length) {
+        const soundKey = slowmoSounds[Phaser.Math.Between(0, slowmoSounds.length - 1)]!;
+        this.sound.play(soundKey);
+      }
     }
   }
 
