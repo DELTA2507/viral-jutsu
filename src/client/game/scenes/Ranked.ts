@@ -21,7 +21,8 @@ export class Ranked extends Scene {
   failsCountText: Phaser.GameObjects.Text;
   elapsedTime = 0; // acumula tiempo transcurrido
   elapsedTimeText: Phaser.GameObjects.Text;
-
+  objectsCutCount = 0; // total de objetos cortados
+  
   entities: GameEntity[] = [];
   spawnTimer = 0;
   powerUpTimer = 0;
@@ -29,7 +30,8 @@ export class Ranked extends Scene {
   private isCutting = false;
   trail: Phaser.GameObjects.Graphics;
   trailLine: { x: number; y: number }[] = [];
-
+  
+  comboActiveTime = 0; // tiempo acumulado con combo > 0
   private comboCount = 0; // agregalo al state del Game
   private comboTimer = 0; // para resetear combos después de X segundos
   private comboDuration = 2; // 2 segundos para seguir el combo
@@ -86,12 +88,19 @@ export class Ranked extends Scene {
   }
 
   private async GameOver() {
+    const payload = {
+      points: this.pointsCount,
+      time: this.elapsedTime,
+      combo_time: this.comboActiveTime,
+      objects_cut: this.objectsCutCount,
+    };
+
     try {
-      console.log('Submitting score:', this.pointsCount);
+      console.log('Submitting payload:', payload);
       const response = await fetch(`${window.location.origin}/api/leaderboard/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score: Number(this.pointsCount) }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -104,8 +113,15 @@ export class Ranked extends Scene {
       console.error('Failed to submit score', err);
     }
 
+    // 🔹 Reset completo de métricas
     this.pointsCount = 0;
     this.failsCount = 0;
+    this.elapsedTime = 0;
+    this.comboActiveTime = 0;
+    this.objectsCutCount = 0;
+    this.comboCount = 0;
+    this.comboTimer = 0;
+
     this.updatePointsCountText();
     this.updateFailsCountText();
     this.scene.start('GameOver');
@@ -215,6 +231,7 @@ export class Ranked extends Scene {
       const pointsGained = Math.floor(basePoints * multiplier);
 
       this.pointsCount += pointsGained;
+      this.objectsCutCount++;
 
       this.updatePointsCountText();
       this.showComboFeedback(`Combo x${multiplier.toFixed(1)}`, e.sprite.x, e.sprite.y - 30, "#ffff00");
@@ -262,9 +279,13 @@ export class Ranked extends Scene {
     const { width, height } = this.scale;
 
     // --- COMBO TIMER ---
-    this.comboTimer -= dt;
-    if (this.comboTimer <= 0 && this.comboCount > 0) {
-        this.comboCount = 0;
+    if (this.comboCount > 0) {
+      this.comboTimer -= dt;
+      if (this.comboTimer > 0) {
+        this.comboActiveTime += dt; // acumula mientras el combo está vivo
+      } else {
+        this.comboCount = 0; // se acabó el combo
+      }
     }
     this.elapsedTime += dt; // tiempo total transcurrido
 
@@ -287,7 +308,7 @@ export class Ranked extends Scene {
 
     if (this.powerUpTimer > this.powerUpInterval) {
       this.powerUpTimer = 0;
-      this.spawnPowerUp(width, height);
+      this.spawnPowerUp(width);
     }
 
     for (let i = this.entities.length - 1; i >= 0; i--) {
@@ -318,7 +339,7 @@ export class Ranked extends Scene {
     }
   }
 
-  spawnPowerUp(width: number, height: number) {
+  spawnPowerUp(width: number) {
     const powerUpIcons: string[] = this.registry.get('powerUpsIcons') || [];
     if (!powerUpIcons.length) return;
 

@@ -87,31 +87,14 @@ export class Casual extends Scene {
     });
   }
 
-  private async GameOver() {
-    try {
-      console.log('Submitting score:', this.pointsCount);
-      const response = await fetch(`${window.location.origin}/api/leaderboard/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score: Number(this.pointsCount) }),
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('Leaderboard submit failed', response.status, text);
-      } else {
-        console.log('Score submitted successfully');
-      }
-    } catch (err) {
-      console.error('Failed to submit score', err);
-    }
-
+  private GameOver() {
     this.pointsCount = 0;
     this.failsCount = 0;
     this.gameTime = 60;
     this.updatePointsCountText();
     this.updateFailsCountText();
-    this.scene.start('GameOver');
+    this.updateGameTimeText();
+    this.scene.start('Casual'); // reinicia el modo casual desde cero
   }
 
   // --- TRAIL & CUT ---

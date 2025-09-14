@@ -37,83 +37,108 @@ router.get<{ postId: string }, InitResponse | { status: string; message: string 
 );
 
 // --- LEADERBOARD ---
+
 // submit score
+type LeaderboardType = 'points' | 'time' | 'combo_time' | 'objects_cut';
 const submitScore: RequestHandler = async (req, res) => {
   const username = await reddit.getCurrentUsername();
   const userId = context.userId;
 
-  console.log('username:', username);
-  console.log('userId:', userId);
-  console.log('req.body:', req.body);
-
   if (!username || !userId) {
-    console.log('Not logged in');
     res.status(401).json({ status: 'error', message: 'Not logged in' });
     return;
   }
 
-  const score = Number(req.body.score);
-  console.log('Parsed score:', score);
+  // el cliente manda { points, time, combo_time, objects_cut }
+  const { points, time, combo_time, objects_cut } = req.body as {
+    points: number;
+    time: number;
+    combo_time: number;
+    objects_cut: number;
+  };
 
-  if (isNaN(score)) {
-    console.log('Score is NaN');
-    res.status(400).json({ status: 'error', message: 'Score must be a number' });
-    return;
-  }
+  const metrics: Record<LeaderboardType, number> = {
+    points: Number(points),
+    time: Number(time),
+    combo_time: Number(combo_time),
+    objects_cut: Number(objects_cut),
+  };
 
   try {
-    console.log('Saving to leaderboard...');
-    await redis.zAdd('game:leaderboard', { member: userId, score });
-    console.log('Saving username...');
+    // guardar todas las métricas en sus respectivos leaderboards
+    for (const [key, score] of Object.entries(metrics)) {
+      if (!isNaN(score)) {
+        await redis.zAdd(`leaderboard:${key}`, { member: userId, score });
+      }
+    }
+
+    // asegurar mapping userId -> username
     await redis.hSet('game:usernames', { [userId]: username });
 
-    console.log('Score saved successfully');
-    res.json({ status: 'success' });
+    res.json({ status: 'success', saved: metrics });
   } catch (err) {
     console.error('Error saving score:', err);
     res.status(500).json({ status: 'error', message: 'Failed to save score' });
   }
 };
+
 router.post('/api/leaderboard/submit', submitScore);
 
+
 // get top 10
-router.get('/api/leaderboard/top', async (req, res) => {
+router.get('/api/leaderboard/top', async (_req: any, res: any) => {
+  const today = new Date().getDay();
+  const dayKeys = ['sun','mon','tue','wed','thu','fri','sat'] as const;
+
+  const challenges: Record<typeof dayKeys[number], { id: string }> = {
+    sun: { id: 'points' },
+    mon: { id: 'points' },
+    tue: { id: 'time' },
+    wed: { id: 'combo_time' },
+    thu: { id: 'combo_time' },
+    fri: { id: 'objects_cut' },
+    sat: { id: 'time' },
+  };
+
+  const dayKey = dayKeys[today];
+  if (!dayKey) return res.status(500).json({ status: 'error', message: 'Invalid day key' });
+
+  const challengeType = challenges[dayKey].id;
+
+  const leaderboardKey = `leaderboard:${challengeType}`;
+
   try {
-    const entries = await redis.zRange('game:leaderboard', 0, -1);
-    const sorted = entries.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-    const top = await Promise.all(
-      sorted.slice(0, 10).map(async (e) => {
-        const username = await redis.hGet('game:usernames', e.member);
-        return { userId: e.member, score: e.score ?? 0, username };
-      })
-    );
+      const zRangeResult: any = await redis.zRange(leaderboardKey, 0, -1);
+
+      const topWithScores = await Promise.all(
+        zRangeResult.map(async (entry: { score: number, member: string }) => {
+          const userId = entry.member
+          const score = entry.score ?? 0
+          const username = await redis.hGet('game:usernames', userId)
+          return { userId, username, score }
+        })
+      );
+
+    const sorted = topWithScores.sort((a, b) => b.score - a.score);
+
+    const top = sorted.slice(0, 10);
 
     const userId = context?.userId;
-    console.log('userId from context (me):', userId);
     let me: { userId: string; score: number; rank: number; username: string | undefined } | null = null;
     if (userId) {
-      const index = sorted.findIndex(e => e.member === userId);
-      if (index >= 0) {
-        const e = sorted[index];
-        const username = await reddit.getCurrentUsername();
-        if (e) {
-          me = { userId: e.member, score: e.score ?? 0, rank: index + 1, username };
-        }
-      } else {
-        const score = await redis.zScore('game:leaderboard', userId);
-        const username = await reddit.getCurrentUsername();
-        me = { userId, score: score ?? 0, rank: sorted.length + 1, username };
-      }
+      const index = sorted.findIndex(e => e.userId === userId);
+      const score = (await redis.zScore(leaderboardKey, userId)) ?? 0;
+      const username = await reddit.getCurrentUsername();
+      me = { userId, score, rank: index >= 0 ? index + 1 : sorted.length + 1, username };
     }
 
-    console.log('me to send:', me);
-
-    res.json({ top, me });
+    res.json({ top, me, challengeType });
   } catch (err) {
-    console.error(err);
+    console.error('Leaderboard fetch error:', err);
     res.status(500).json({ status: 'error', message: 'Failed to get leaderboard' });
   }
 });
+
 
 // --- POST CREATION INTERNAL ---
 router.post('/internal/on-app-install', async (_req, res) => {

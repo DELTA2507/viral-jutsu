@@ -1,6 +1,10 @@
 import { Scene, GameObjects } from 'phaser';
+import { challenges } from '../../../shared/config/daily_challenges';
 
 export class MainMenu extends Scene {
+  private dailyChallengeContainer: Phaser.GameObjects.Container | null = null;
+  private dailyChallengeTimerEvent?: Phaser.Time.TimerEvent;
+
   background: GameObjects.Image | null = null;
   logo: GameObjects.Image | null = null;
   title: GameObjects.Text | null = null;
@@ -117,6 +121,8 @@ export class MainMenu extends Scene {
       }
     });
 
+    this.showDailyChallenge();
+
     this.layoutButtonsVertically(buttons, 0.5, 0.13);
   }
 
@@ -140,5 +146,73 @@ export class MainMenu extends Scene {
     buttons.forEach((btn, i) => {
       btn.setPosition(this.scale.width / 2, height * (startYPercent + i * spacingPercent));
     });
+  }
+
+  private showDailyChallenge(): void {
+    if (this.dailyChallengeContainer) this.dailyChallengeContainer.destroy();
+    if (this.dailyChallengeTimerEvent) this.dailyChallengeTimerEvent.destroy();
+
+    const { width, height } = this.scale;
+    const today = new Date().getDay(); 
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+    const dayKey = dayKeys[today] as keyof typeof challenges;
+    const challenge = challenges[dayKey];
+
+    const containerY = height * 0.13;
+    const containerScale = Phaser.Math.Clamp(height / 768, 0.9, 1.1);
+    const container = this.add.container(width / 2, containerY).setScale(containerScale);
+
+    const bg = this.add.rectangle(0, 0, 400, 140, 0x000000, 0.5)
+      .setOrigin(0.5)
+      .setStrokeStyle(3, 0xffffff);
+
+    let nameText = this.add.text(0, -35, `⚔️ ${challenge?.name ?? 'No Challenge'}`, {
+      fontFamily: 'Helvetica',
+      fontSize: '28px',
+      color: '#ffffff',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
+
+    let descText = this.add.text(0, 0, challenge?.description ?? 'No daily challenge available.', {
+      fontFamily: 'Helvetica',
+      fontSize: '18px',
+      color: '#ffffaa',
+      align: 'center',
+      wordWrap: { width: 360 }
+    }).setOrigin(0.5);
+
+    const timerText = this.add.text(0, 45, '', {
+      fontFamily: 'Helvetica',
+      fontSize: '20px',
+      color: '#ff5555',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
+
+    const updateTimer = () => {
+      const now = new Date();
+      const nextMidnight = new Date();
+      nextMidnight.setHours(24, 0, 0, 0);
+      const diff = nextMidnight.getTime() - now.getTime();
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      timerText.setText(`⏱️ ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')} left`);
+    };
+
+    updateTimer();
+    this.dailyChallengeTimerEvent = this.time.addEvent({
+      delay: 1000,
+      callback: updateTimer,
+      loop: true
+    });
+
+    container.add([bg, nameText, descText, timerText]);
+    this.dailyChallengeContainer = container;
   }
 }

@@ -1,9 +1,10 @@
 import { Scene } from 'phaser';
 import { Casual } from './Casual';
 import { Ranked } from './Ranked';
+import { Tutorial } from './Tutorial';
 
 export class PauseMenu extends Scene {
-    parentScene!: Casual | Ranked;
+    parentScene!: Casual | Ranked | Tutorial;
     bg!: Phaser.GameObjects.Rectangle;
     resumeBtn!: Phaser.GameObjects.Text;
     exitBtn!: Phaser.GameObjects.Text;
