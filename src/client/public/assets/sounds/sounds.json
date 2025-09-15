@@ -11,6 +11,9 @@
     ]
   },
   "powerUps": {
+    "Shield": [
+      "assets/sounds/powerUps/Shield/powerup_shield.wav"
+    ],
     "Slowmo": [
       "assets/sounds/powerUps/Slowmo/powerup_slowmo.mp3"
     ],

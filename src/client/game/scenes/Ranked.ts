@@ -39,6 +39,8 @@ export class Ranked extends Scene {
   private slowmoActive = false;
   private slowmoFactor = 0.5; // everything moves at 50% speed
 
+  private shieldActive = false;
+
   // --- Boost: spatial quadtree ---
   private entityGrid: Map<string, GameEntity[]> = new Map();
   private cellSize = 100;
@@ -390,10 +392,11 @@ export class Ranked extends Scene {
 
     // --- load icons from registry ---
     const subredditIcons: string[] = this.registry.get('subredditsIcons') || [];
+    const characterIcons: string[] = this.registry.get('charactersIcons') || [];
     const memeIcons: string[] = this.registry.get('memesIcons') || [];
     const hazardIcons: string[] = this.registry.get('hazardsIcons') || [];
 
-    const iconArray = type === 'good' ? subredditIcons.concat(memeIcons) : hazardIcons;
+    const iconArray = type === 'good' ? subredditIcons.concat(memeIcons, characterIcons) : hazardIcons;
     if (!iconArray.length) return;
 
     const key = iconArray[Phaser.Math.Between(0, iconArray.length - 1)]; if (!key) return;
@@ -526,7 +529,21 @@ export class Ranked extends Scene {
   }
 
   private activateShield() {
-    console.log('Shield activated! (not implemented)');
+    const duration = 10; // seconds
+    if (this.shieldActive) return;
+    this.shieldActive = true;
+
+    this.time.delayedCall(duration * 1000, () => {
+      this.shieldActive = false;
+    });
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const shieldSounds: string[] = this.registry.get('powerUps_ShieldSounds') || [];
+      if (shieldSounds.length) {
+        const soundKey = shieldSounds[Phaser.Math.Between(0, shieldSounds.length - 1)]!;
+        this.sound.play(soundKey);
+      }
+    }
   }
 
   private showComboFeedback(text: string, x: number, y: number, color: string) {

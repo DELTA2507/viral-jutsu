@@ -1,16 +1,40 @@
 {
   "subreddits": [
+    "assets/images/subreddits/Dammthatsinteresting.png",
+    "assets/images/subreddits/Devvit.png",
+    "assets/images/subreddits/HistoryMemes.png",
+    "assets/images/subreddits/Silksong.png",
     "assets/images/subreddits/be_amazed.png",
     "assets/images/subreddits/cursed_comments.png",
-    "assets/images/subreddits/reddit_snoo.png"
+    "assets/images/subreddits/dankmemes.png",
+    "assets/images/subreddits/funny.png",
+    "assets/images/subreddits/hmm.png",
+    "assets/images/subreddits/namesoundalikes.png",
+    "assets/images/subreddits/reddit_snoo.png",
+    "assets/images/subreddits/wholesomememes.png"
   ],
   "memes": [
+    "assets/images/memes/blackAdam.png",
+    "assets/images/memes/disastergirl.png",
     "assets/images/memes/ia.png",
+    "assets/images/memes/mewing.png",
     "assets/images/memes/skong.png"
   ],
+  "characters": [
+    "assets/images/characters/cuphead.png",
+    "assets/images/characters/gumball.png",
+    "assets/images/characters/hornet.png",
+    "assets/images/characters/mugman.png",
+    "assets/images/characters/naruto.png",
+    "assets/images/characters/tanjiro.png"
+  ],
   "hazards": [
+    "assets/images/hazards/bomb.png",
+    "assets/images/hazards/brainrot01.png",
+    "assets/images/hazards/coronavirus.png",
     "assets/images/hazards/mod.png",
-    "assets/images/hazards/nsfw.png"
+    "assets/images/hazards/nsfw.png",
+    "assets/images/hazards/troll.png"
   ],
   "powerUps": [
     "assets/images/powerUps/kunaistorm.png",

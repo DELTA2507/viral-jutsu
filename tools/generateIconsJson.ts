@@ -3,7 +3,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 
-type IconCategories = 'subreddits' | 'memes' | 'hazards' | 'powerUps';
+type IconCategories = 'subreddits' | 'memes' | 'characters' | 'hazards' | 'powerUps';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +14,7 @@ const outputFile = path.join(assetsDir, 'icons.json');
 const categories: Record<IconCategories, string> = {
   subreddits: 'subreddits',
   memes: 'memes',
+  characters: 'characters',
   hazards: 'hazards',
   powerUps: 'powerUps'
 };
@@ -21,6 +22,7 @@ const categories: Record<IconCategories, string> = {
 const jsonOutput: Record<string, string[]> = {
   subreddits: [],
   memes: [],
+  characters: [],
   hazards: [],
   powerUps: []
 };

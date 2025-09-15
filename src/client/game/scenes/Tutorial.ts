@@ -70,8 +70,14 @@ export class Tutorial extends Scene {
     }).setOrigin(0.5);
 
     const hazardIcons: string[] = this.registry.get('hazardsIcons') || [];
+    
     const powerUpIcons: string[] = this.registry.get('powerUpsIcons') || [];
-    const goodIcons: string[] = this.registry.get('subredditsIcons') || [];
+
+    const subredditIcons: string[] = this.registry.get('subredditsIcons') || [];
+    const characterIcons: string[] = this.registry.get('charactersIcons') || [];
+    const memeIcons: string[] = this.registry.get('memesIcons') || [];
+
+    const goodIcons = subredditIcons.concat(memeIcons, characterIcons);
 
     this.tutorialItems = [
       { key: this.getRandom(goodIcons) || '', title: 'Good', description: 'Slice these to gain points and time!' },

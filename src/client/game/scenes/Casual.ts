@@ -38,6 +38,8 @@ export class Casual extends Scene {
   private slowmoActive = false;
   private slowmoFactor = 0.5; // everything moves at 50% speed
 
+  private shieldActive = false;
+
   // --- Boost: spatial quadtree ---
   private entityGrid: Map<string, GameEntity[]> = new Map();
   private cellSize = 100;
@@ -208,13 +210,15 @@ export class Casual extends Scene {
       this.showTimeFeedback(`+${pointsGained}`, e.sprite.x, e.sprite.y, "#00ff00");
       this.showComboFeedback(`Combo x${multiplier.toFixed(1)}`, e.sprite.x, e.sprite.y - 30, "#ffff00");
     } else if (e.type === 'hazard') {
-      this.failsCount++;
-      this.comboCount = 0;  // reset combo
-      this.gameTime -= 10;
-      this.updateFailsCountText();
-      this.updateGameTimeText();
-      this.showTimeFeedback("-10", e.sprite.x, e.sprite.y, "#ff0000ff");
-      this.cameras.main.shake(150, 0.02); // 150ms de duración, intensidad 0.02
+      if (!this.shieldActive) {
+        this.failsCount++;
+        this.comboCount = 0;  // reset combo
+        this.gameTime -= 10;
+        this.updateFailsCountText();
+        this.updateGameTimeText();
+        this.showTimeFeedback("-10", e.sprite.x, e.sprite.y, "#ff0000ff");
+        this.cameras.main.shake(150, 0.02); // 150ms de duración, intensidad 0.02
+      }
       if (this.failsCount >= 3) this.GameOver();
     }
 
@@ -365,10 +369,11 @@ export class Casual extends Scene {
 
     // --- load icons from registry ---
     const subredditIcons: string[] = this.registry.get('subredditsIcons') || [];
+    const characterIcons: string[] = this.registry.get('charactersIcons') || [];
     const memeIcons: string[] = this.registry.get('memesIcons') || [];
     const hazardIcons: string[] = this.registry.get('hazardsIcons') || [];
 
-    const iconArray = type === 'good' ? subredditIcons.concat(memeIcons) : hazardIcons;
+    const iconArray = type === 'good' ? subredditIcons.concat(memeIcons, characterIcons) : hazardIcons;
     if (!iconArray.length) return;
 
     const key = iconArray[Phaser.Math.Between(0, iconArray.length - 1)]; if (!key) return;
@@ -504,7 +509,21 @@ export class Casual extends Scene {
   }
 
   private activateShield() {
-    console.log('Shield activated! (not implemented)');
+    const duration = 10; // seconds
+    if (this.shieldActive) return;
+    this.shieldActive = true;
+
+    this.time.delayedCall(duration * 1000, () => {
+      this.shieldActive = false;
+    });
+    const soundActive = this.registry.get('SoundActive');
+    if (soundActive) {
+      const shieldSounds: string[] = this.registry.get('powerUps_ShieldSounds') || [];
+      if (shieldSounds.length) {
+        const soundKey = shieldSounds[Phaser.Math.Between(0, shieldSounds.length - 1)]!;
+        this.sound.play(soundKey);
+      }
+    }
   }
 
   private showTimeFeedback(text: string, x: number, y: number, color: string) {
