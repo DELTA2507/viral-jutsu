@@ -124,17 +124,18 @@ export class Tutorial extends Scene {
       color: '#ffffff',
       stroke: '#000',
       strokeThickness: 4,
-    }).setOrigin(0.5);
+    }).setOrigin(0.5, 0.5);
 
-    this.textDesc = this.add.text(width / 2, height * 0.77, '', {
+    this.textDesc = this.add.text(width / 2, height * 0.73, '', {  // un poco más abajo
       fontFamily: 'Helvetica',
       fontSize: '20px',
       color: '#ffffaa',
-      wordWrap: { width: width * 0.8 },
+      wordWrap: { width: width * 0.9 },
       align: 'center',
       stroke: '#000',
       strokeThickness: 3,
-    }).setOrigin(0.5);
+      lineSpacing: 4,  // agrega separación entre líneas
+    }).setOrigin(0.5, 0); // origen top-center
 
     this.nextBtn = this.createButton('Next', 0.9, () => {
       this.currentIndex++;
@@ -202,8 +203,15 @@ export class Tutorial extends Scene {
 
     if (this.border) { this.border.destroy(); this.border = null; }
 
-    this.textTitle?.setText('Pause Tutorial');
-    this.textDesc?.setText('Press the SPACEBAR at any time to pause the game!');
+    const { width, height } = this.scale;
+    // acá metés la imagen del ícono de pausa
+    this.spritePreview = this.add.image(width / 2, height * 0.5, 'pause')
+      .setDisplaySize(100, 100)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', this.togglePause, this);
+
+    this.textTitle?.setText('How to pause');
+    this.textDesc?.setText('Press the SPACEBAR or the PAUSE ICON at any time to pause the game!');
 
     this.nextBtn?.destroy();
     this.nextBtn = this.createButton('Continue', 0.9, () => {

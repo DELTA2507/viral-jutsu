@@ -41,6 +41,7 @@ export class Preloader extends Scene {
 
   preload() {
     this.load.image('reddit_snoo', '/assets/images/subreddits/reddit_snoo.png');
+    this.load.image('pause', '/assets/images/pause.png');
     this.load.image('sound_on', '/assets/images/sound_on.png');
     this.load.image('sound_off', '/assets/images/sound_off.png');
     this.load.image('logo', '/assets/images/logo.png');

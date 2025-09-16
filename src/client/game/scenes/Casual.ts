@@ -12,6 +12,7 @@ interface GameEntity {
 
 export class Casual extends Scene {
   private isPaused = false;
+  private pauseButton: Phaser.GameObjects.Image;
 
   camera: Phaser.Cameras.Scene2D.Camera;
   background: Phaser.GameObjects.Image;
@@ -47,7 +48,12 @@ export class Casual extends Scene {
   constructor() { super('Casual'); }
 
   create() {
+    this.pointsCount = 0;
+    this.failsCount = 0;
     this.gameTime = 60;
+    this.elapsedTime = 0;
+    this.comboCount = 0;
+    this.comboTimer = 0;
     this.setupCameraAndBackground();
     this.setupUI();
     this.setupInput();
@@ -71,6 +77,7 @@ export class Casual extends Scene {
     this.pointsCountText = this.add.text(20, 20, `Points: ${this.pointsCount}`, textStyle);
     this.failsCountText = this.add.text(20, 60, `Fails: ${this.failsCount}`, textStyle);
     this.gameTimeText = this.add.text(this.scale.width - 20, 20, `Time: 0`, { ...textStyle, align: 'right' }).setOrigin(1, 0);
+    this.pauseButton = this.add.image(0, 0, 'pause')
   }
 
   private setupInput() {
@@ -79,6 +86,8 @@ export class Casual extends Scene {
         this.togglePause();
       });
     }
+
+    this.pauseButton.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.togglePause(), this);
 
     this.input.on('pointerdown', () => (this.isCutting = true));
     this.input.on('pointerup', () => { this.isCutting = false; this.trail.clear(); this.trailLine = []; });
@@ -93,6 +102,9 @@ export class Casual extends Scene {
     this.pointsCount = 0;
     this.failsCount = 0;
     this.gameTime = 60;
+    this.elapsedTime = 0;
+    this.comboCount = 0;
+    this.comboTimer = 0;
     this.updatePointsCountText();
     this.updateFailsCountText();
     this.updateGameTimeText();
@@ -248,8 +260,8 @@ export class Casual extends Scene {
         if (soundActive) {
           const cutSounds = this.registry.get(`cuts_${cutCategory}Sounds`) || [];
           if (cutSounds.length) {
-              const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
-              this.sound.play(soundKey);
+            const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
+            this.sound.play(soundKey);
           }
         }
     }
@@ -306,12 +318,34 @@ export class Casual extends Scene {
 
       if (e.sprite.y > height + 50 || e.sprite.x < -50 || e.sprite.x > width + 50) {
         if (e.type === 'good') {
+          if (!this.shieldActive) {
             this.failsCount++;
             this.comboCount = 0;
             this.updateFailsCountText();
             this.updateGameTimeText();
-            this.showTimeFeedback("-5", e.sprite.x, e.sprite.y, "#ff8800"); // feedback visual
+            
+            // Background color change feedback
+            const duration = 1; // seconds
+            this.background.setAlpha(0.7); // ajusta entre 0 y 1 según lo intenso que quieras el efecto
+            this.camera.setBackgroundColor(0xCC7722);
+
+            this.time.delayedCall(duration * 1000, () => {
+              // volver al fondo normal
+              this.background.setAlpha(1);
+              this.camera.setBackgroundColor(0x222222);
+            });
+
+            const soundActive = this.registry.get('SoundActive');
+            if (soundActive) {
+              const cutSounds = this.registry.get(`cuts_hazardSounds`) || [];
+              if (cutSounds.length) {
+                const soundKey = cutSounds[Phaser.Math.Between(0, cutSounds.length - 1)];
+                this.sound.play(soundKey);
+              }
+            }
+
             if (this.failsCount >= 3) this.GameOver();
+          }
         }
 
         this.removeEntityFromGrid(e);
@@ -588,6 +622,13 @@ export class Casual extends Scene {
     // top-right time
     if (this.gameTimeText) {
       this.gameTimeText.setPosition(width - 20, 20);
+    }
+
+    // botón pausa en esquina inferior derecha
+    if (this.pauseButton) {
+      const size = Math.max(40, Math.min(width, height) * 0.08); // escala responsiva
+      this.pauseButton.setDisplaySize(size, size);
+      this.pauseButton.setPosition(width - size / 2 - 20, height - size / 2 - 20);
     }
   }
 

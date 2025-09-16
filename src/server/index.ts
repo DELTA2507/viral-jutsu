@@ -68,7 +68,7 @@ const submitScore: RequestHandler = async (req, res) => {
     // guardar todas las métricas en sus respectivos leaderboards
     for (const [key, score] of Object.entries(metrics)) {
       if (!isNaN(score)) {
-        await redis.zAdd(`leaderboard:${key}`, { member: userId, score });
+        await redis.zAdd(getLeaderboardKey(key), { member: userId, score });
       }
     }
 
@@ -105,7 +105,7 @@ router.get('/api/leaderboard/top', async (_req: any, res: any) => {
 
   const challengeType = challenges[dayKey].id;
 
-  const leaderboardKey = `leaderboard:${challengeType}`;
+  const leaderboardKey = getLeaderboardKey(challengeType);
 
   try {
       const zRangeResult: any = await redis.zRange(leaderboardKey, 0, -1);
@@ -138,6 +138,11 @@ router.get('/api/leaderboard/top', async (_req: any, res: any) => {
     res.status(500).json({ status: 'error', message: 'Failed to get leaderboard' });
   }
 });
+
+function getLeaderboardKey(type: string) {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return `leaderboard:${type}:${today}`;
+}
 
 
 // --- POST CREATION INTERNAL ---
