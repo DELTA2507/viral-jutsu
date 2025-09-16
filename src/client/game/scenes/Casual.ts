@@ -23,6 +23,7 @@ export class Casual extends Scene {
   gameTime = 60;
   elapsedTime = 0; // acumula tiempo transcurrido
   gameTimeText: Phaser.GameObjects.Text;
+  objectsCutCount = 0; // total de objetos cortados
 
   entities: GameEntity[] = [];
   spawnTimer = 0;
@@ -32,6 +33,7 @@ export class Casual extends Scene {
   trail: Phaser.GameObjects.Graphics;
   trailLine: { x: number; y: number }[] = [];
 
+  comboActiveTime = 0; // tiempo acumulado con combo > 0
   private comboCount = 0; // agregalo al state del Game
   private comboTimer = 0; // para resetear combos después de X segundos
   private comboDuration = 2; // 2 segundos para seguir el combo
@@ -52,6 +54,8 @@ export class Casual extends Scene {
     this.failsCount = 0;
     this.gameTime = 60;
     this.elapsedTime = 0;
+    this.comboActiveTime = 0;
+    this.objectsCutCount = 0;
     this.comboCount = 0;
     this.comboTimer = 0;
     this.setupCameraAndBackground();
@@ -99,16 +103,27 @@ export class Casual extends Scene {
   }
 
   private GameOver() {
+    const payload = {
+      points: this.pointsCount,
+      time: Number(this.elapsedTime.toFixed(2)),
+      combo_time: Number(this.comboActiveTime.toFixed(2)),
+      objects_cut: this.objectsCutCount,
+    };
+
+    // reset stats
     this.pointsCount = 0;
     this.failsCount = 0;
     this.gameTime = 60;
     this.elapsedTime = 0;
     this.comboCount = 0;
+    this.comboActiveTime = 0;
     this.comboTimer = 0;
+    this.objectsCutCount = 0;
+
     this.updatePointsCountText();
     this.updateFailsCountText();
     this.updateGameTimeText();
-    this.scene.start('GameOver'); // reinicia el modo casual desde cero
+    this.scene.start('GameOver', payload);
   }
 
   // --- TRAIL & CUT ---
@@ -216,6 +231,7 @@ export class Casual extends Scene {
       const pointsGained = Math.floor(basePoints * multiplier);
 
       this.pointsCount += pointsGained;
+      this.objectsCutCount++;
 
       this.updatePointsCountText();
       this.updateGameTimeText();
@@ -273,9 +289,13 @@ export class Casual extends Scene {
     const { width, height } = this.scale;
 
     // --- COMBO TIMER ---
-    this.comboTimer -= dt;
-    if (this.comboTimer <= 0 && this.comboCount > 0) {
-        this.comboCount = 0;
+    if (this.comboCount > 0) {
+      this.comboTimer -= dt;
+      if (this.comboTimer > 0) {
+        this.comboActiveTime += dt; // acumula mientras el combo está vivo
+      } else {
+        this.comboCount = 0; // se acabó el combo
+      }
     }
 
     this.gameTime -= dt;
@@ -484,6 +504,7 @@ export class Casual extends Scene {
 
       // puntos + tiempo + feedback
       this.pointsCount++;
+      this.objectsCutCount++;
       this.gameTime += 10;
 
       this.comboCount++;

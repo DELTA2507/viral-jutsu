@@ -105,8 +105,8 @@ export class Ranked extends Scene {
   private async GameOver() {
     const payload = {
       points: this.pointsCount,
-      time: this.elapsedTime,
-      combo_time: this.comboActiveTime,
+      time: Number(this.elapsedTime.toFixed(2)),
+      combo_time: Number(this.comboActiveTime.toFixed(2)),
       objects_cut: this.objectsCutCount,
     };
 
@@ -133,13 +133,13 @@ export class Ranked extends Scene {
     this.failsCount = 0;
     this.elapsedTime = 0;
     this.comboActiveTime = 0;
-    this.objectsCutCount = 0;
     this.comboCount = 0;
     this.comboTimer = 0;
+    this.objectsCutCount = 0;
 
     this.updatePointsCountText();
     this.updateFailsCountText();
-    this.scene.start('GameOver');
+    this.scene.start('GameOver', payload);
   }
 
   // --- TRAIL & CUT ---
@@ -305,6 +305,7 @@ export class Ranked extends Scene {
         this.comboCount = 0; // se acabó el combo
       }
     }
+    
     this.elapsedTime += dt; // tiempo total transcurrido
 
     this.elapsedTimeText.setText(`Time: ${Math.floor(this.elapsedTime)}`);
@@ -509,6 +510,7 @@ export class Ranked extends Scene {
 
       // puntos + tiempo + feedback
       this.pointsCount++;
+      this.objectsCutCount++;
 
       this.comboCount++;
       this.comboTimer = this.comboDuration;
